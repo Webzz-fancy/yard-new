@@ -154,11 +154,11 @@ export default function HeroStory() {
       /* ── the master scrub ── */
       const SEG = 3.5;          // scroll units per flavour segment (text wipes in by 0.45, hand-off at 0.70)
       const TRAVEL = 3.2;       // film -> story handoff (slow, smooth descent)
-      const FILM = 9.0;         // the padel film scrubs over this stretch
+      const FILM = 7.6;         // the padel film scrubs over this stretch (~3 screens)
       const HOLD = FILM + 0.2;  // last frame holds a short beat before the cup lifts
       const n = STORY_ORDER.length;
       const per = touch ? 1.15 : 1.75;
-      const total = window.innerHeight * per * (n + 0.9) + window.innerHeight * (touch ? 2.4 : 3.0);
+      const total = window.innerHeight * per * (n + 0.55) + window.innerHeight * (touch ? 2.2 : 2.7);
       const base = HOLD + TRAVEL;
       const handoffAt = (i) => base + i * SEG + SEG * 0.70;
 

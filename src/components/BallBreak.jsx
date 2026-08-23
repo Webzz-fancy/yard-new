@@ -9,9 +9,8 @@ gsap.registerPlugin(ScrollTrigger);
 /* ══════════════════════════════════════════════════════════════════════
    BallBreak — drinks → dessert, in one continuous move.
 
-   1. EMERGE   the drinks board's cream is still on screen; a white court
-               line draws across it and the film fades up through the cream
-               (the court is *revealed*, not cut to).
+   1. EMERGE   the drinks board's cream is still on screen; the film fades
+               up through it (the court is *revealed*, not cut to).
    2. FILM     the client's second clip, scrubbed: the ball is struck, rolls,
                hits the tennis-ball dessert, the camera settles top-down.
    3. LIFT     on the last frame the canvas swaps to a tray-free plate and
@@ -84,7 +83,7 @@ export default function BallBreak() {
       window.addEventListener('resize', () => { repaint(); placeTray(); });
 
       /* ── the pin: emerge → film → lift ── */
-      const EMERGE = 0.14, FILM = 0.80;
+      const EMERGE = 0.12, FILM = 0.82;   // 12% fade-up, film to 82%, last 18% = tray holds + line wipes in
       const tl = gsap.timeline({
         onUpdate: () => {
           const p = tl.progress();
@@ -94,15 +93,13 @@ export default function BallBreak() {
         },
         scrollTrigger: {
           trigger: root, start: 'top top',
-          end: () => '+=' + window.innerHeight * (touch ? 2.2 : 2.8),
+          end: () => '+=' + window.innerHeight * (touch ? 2.0 : 2.4),
           pin, scrub: 0.8, anticipatePin: 1, invalidateOnRefresh: true,
           onRefresh: placeTray
         }
       });
-      tl.fromTo('.break__line', { scaleX: 0 }, { scaleX: 1, duration: EMERGE * 0.9, ease: 'power2.inOut' }, 0);
-      tl.fromTo(can, { opacity: 0 }, { opacity: 1, duration: EMERGE, ease: 'power2.inOut' }, EMERGE * 0.35);
-      tl.to('.break__line', { opacity: 0, duration: 0.05 }, EMERGE + 0.02);
-      tl.to({}, { duration: 1 - EMERGE });
+      tl.fromTo(can, { opacity: 0 }, { opacity: 1, duration: EMERGE, ease: 'power2.inOut' }, 0);
+      tl.to({}, { duration: 1 - EMERGE }, EMERGE);
       tl.to(words, { yPercent: 0, duration: 0.12, ease: 'expo.out', stagger: 0.04 }, FILM + 0.01);
       tl.to('.break__sub', { opacity: 1, y: 0, duration: 0.08, ease: 'power2.out' }, FILM + 0.1);
 
@@ -118,8 +115,8 @@ export default function BallBreak() {
       };
       ScrollTrigger.create({
         trigger: target(),
-        start: 'top bottom',                 // the card enters from below
-        end: 'top 150px',                    // …and parks under the pills
+        start: () => tl.scrollTrigger.end,   // the moment the film's pin lets go…
+        end: 'top 150px',                    // …until the card parks under the pills
         scrub: true,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
@@ -147,7 +144,6 @@ export default function BallBreak() {
   return (
     <section className="break break--film" id="break" ref={ref} aria-label="Padel break">
       <div className="break__pin" ref={pinRef}>
-        <i className="break__line" aria-hidden="true" />
         <canvas className="break__film" ref={canRef} aria-hidden="true" />
         <div className="break__copy">
           <h2 className="break__h">
