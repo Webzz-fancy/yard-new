@@ -68,6 +68,9 @@ export default function HeroStory() {
       const film = getSequence('padel', vcan);
       const plate = new Image();
       plate.src = `${import.meta.env.BASE_URL}assets/stills/padel-plate.webp${assetV()}`;
+      const poster = new Image();                     // stands in for any frame that has not arrived yet
+      poster.src = `${import.meta.env.BASE_URL}assets/stills/poster-padel.webp`;
+      poster.onload = () => { if (filmFrame < 0 && !onPlate) drawCover(poster); };
       const FW = 1280, FH = 720;
       const CUP = { x: 476, y: 163, w: 322, h: 413 };   // cup box inside the last frame
 
@@ -95,6 +98,7 @@ export default function HeroStory() {
         onPlate = false;
         if (i === filmFrame) return;
         if (drawCover(film.images[i])) filmFrame = i;   // only cache once it really painted
+        else if (filmFrame < 0) drawCover(poster);      // nothing painted yet → poster, never blank
       };
       const repaint = () => { const f = filmFrame; filmFrame = -1; if (onPlate) { onPlate = false; paintFilm(1); } else paintFilm(Math.max(0, f) / (film.count - 1)); };
       /* place the lead cup exactly over the cup in the last frame */

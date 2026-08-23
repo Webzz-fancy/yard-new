@@ -2887,3 +2887,6 @@ a, button, [data-cursor] { cursor: pointer; }
 /* collapsed accordion panels are fully hidden (not just clipped) once closed */
 .mgroup--acc:not(.is-open) .mgroup__body { visibility: hidden; transition: visibility 0s linear .6s; }
 .mgroup--acc.is-open .mgroup__body { visibility: visible; transition: none; }
+
+.mcard__img--btn img[data-src] { opacity: 0; }
+.mcard__img--btn img { transition: opacity .35s ease; }

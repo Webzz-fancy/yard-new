@@ -46,7 +46,13 @@ export default function Menu({
       if (!body) return;
       gsap.set(body, { height: i === 0 ? 'auto' : 0, overflow: 'hidden' });
     });
+    /* every photo — including the ones in collapsed categories — is fetched
+       once the board is a screen and a half away, so opening a category
+       never shows empty boxes */
+    const fetchAll = () => ref.current?.querySelectorAll('img[data-src]').forEach((img) => { img.src = img.dataset.src; img.removeAttribute('data-src'); });
+
     const ctx = gsap.context(() => {
+      ScrollTrigger.create({ trigger: ref.current, start: 'top bottom+=150%', once: true, onEnter: fetchAll });
       gsap.from(ref.current.querySelector('.menu__title'), {
         yPercent: 40, opacity: 0, duration: 1, ease: 'expo.out',
         scrollTrigger: { trigger: ref.current, start: 'top 70%' }
@@ -156,7 +162,7 @@ export default function Menu({
                         onClick={() => setOpen({ name: it.n, d: it.d, img: it.img, cat: c.name })}
                         aria-label={`${it.n} — details`} tabIndex={on ? 0 : -1}>
                         {it.img
-                          ? <img src={`${base}${it.img}${assetV()}`} alt={it.n} loading="lazy" decoding="async" />
+                          ? <img data-src={`${base}${it.img}${assetV()}`} alt={it.n} decoding="async" width="300" height="300" />
                           : <span className="mcard__mark" aria-hidden="true" />}
                       </button>
                       <div className="mcard__foot mcard__foot--big">

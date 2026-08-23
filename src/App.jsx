@@ -55,9 +55,11 @@ export default function App() {
     loadManifest()
       .then(() => {
         setReady(true);
+        /* both films start now; the page opens at 20% of the hero film */
+        warmSequence('dessert');
         return getSequence('padel').load((p) => { if (p >= 0.2) release(); });
       })
-      .then(() => { release(); return warmSequence('dessert'); });   // second film right behind the first
+      .then(release);
   }, []);
 
   const onLoaderDone = useCallback(() => {

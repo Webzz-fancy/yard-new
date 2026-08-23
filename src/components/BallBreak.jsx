@@ -37,6 +37,8 @@ export default function BallBreak() {
     const film = getSequence('dessert', can);
     const plate = new Image();
     plate.src = `${import.meta.env.BASE_URL}assets/stills/dessert-plate.webp${assetV()}`;
+    const poster = new Image();                       // stands in for any frame that has not arrived yet
+    poster.src = `${import.meta.env.BASE_URL}assets/stills/poster-dessert.webp`;
 
     const ctx = gsap.context(() => {
       const words = gsap.utils.toArray('.break__h .w');
@@ -68,6 +70,7 @@ export default function BallBreak() {
         const i = START + Math.round(Math.max(0, Math.min(1, p)) * (film.count - 1 - START));
         if (i === cur) return;
         if (draw(film.images[i])) cur = i;
+        else if (cur < 0) draw(poster);               // nothing painted yet → poster, never blank
       };
       const repaint = () => { if (onPlate) { onPlate = false; paint(1); } else { const c = Math.max(START, cur); cur = -1; paint((c - START) / Math.max(1, film.count - 1 - START)); } };
 
@@ -83,7 +86,7 @@ export default function BallBreak() {
       window.addEventListener('resize', () => { repaint(); placeTray(); });
 
       /* ── the pin: emerge → film → lift ── */
-      const EMERGE = 0.12, FILM = 0.82;   // 12% fade-up, film to 82%, last 18% = tray holds + line wipes in
+      const EMERGE = 0.06, FILM = 0.82;   // quick fade-up from the cream, film to 82%, last 18% = tray holds + line wipes in
       const tl = gsap.timeline({
         onUpdate: () => {
           const p = tl.progress();
