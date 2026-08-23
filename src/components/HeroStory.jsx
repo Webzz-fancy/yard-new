@@ -33,7 +33,6 @@ export default function HeroStory() {
   const queueRefs = [useRef(null), useRef(null), useRef(null)];   // v60, acai, sharjah cloud
   const videoRef = useRef(null);     // full-bleed canvas: the padel film
   const audioRef = useRef(null);     // the film's own soundtrack, scrubbed with it
-  const [sound, setSound] = useState(true);   // on by default; the browser unlocks it on the first tap
   const heroLayer = useRef(null);
   const storyLayer = useRef(null);
   const idxRef = useRef(null);
@@ -374,18 +373,7 @@ export default function HeroStory() {
         <div className="half half--hero half--film" ref={heroLayer}>
           <canvas className="hfilm" ref={videoRef} aria-hidden="true" />
           <div className="hfilm__cue" aria-hidden="true"><span>Scroll</span><i /></div>
-          <audio ref={audioRef} src={`${import.meta.env.BASE_URL}assets/audio/padel.m4a`} preload="auto" data-on={sound ? '1' : '0'} />
-          <button type="button" className={`hfilm__sound${sound ? ' is-on' : ''}`} data-cursor="link"
-            onClick={() => {
-              const a = audioRef.current;
-              if (!a) return;
-              if (!sound) { a.muted = false; a.play().then(() => a.pause()).catch(() => {}); }
-              else a.pause();
-              setSound(!sound);
-            }}
-            aria-pressed={sound}>
-            <i /><span>{sound ? 'Sound on' : 'Sound off'}</span>
-          </button>
+          <audio ref={audioRef} src={`${import.meta.env.BASE_URL}assets/audio/padel.m4a`} preload="auto" data-on="1" />
         </div>
 
         {/* ── HALF 2 ── same background, revealed by scroll ── */}
