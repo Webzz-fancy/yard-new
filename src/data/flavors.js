@@ -29,7 +29,11 @@ export const BRAND = {
 export const ORDER = {
   ios: 'https://apps.apple.com/ae/app/drivu-your-drive-thru-orders/id1207582756',
   android: 'https://play.google.com/store/apps/details?id=co.m4.drivu',
-  instagram: 'https://www.instagram.com/the.yard.ae/'
+  instagram: 'https://www.instagram.com/the.yard.ae/',
+  /* their live Drivu menu — the only place that actually takes an order */
+  drivu: 'https://drivu.co/DriveThru/The_Yard_BLrXY/Sharjah_Research_Technology_&_Innovation_Park',
+  /* Farah loyalty card — their link-in-bio registration form */
+  loyalty: 'https://farahcard.com/business/customer-registration-form/0vFAgktIS6QL1vYhKUBkBJ'
 };
 
 /* every "get the app" button points straight at a store listing — Android
@@ -50,41 +54,39 @@ export const SHOP = {
   hours: 'Mon–Fri 8am–11pm\nSat & Sun 11am–11pm',
   rating: '4.7',
   reviewCount: '145',
-  maps: 'https://www.google.com/maps/search/?api=1&query=The+Yard+%D8%B0%D8%A7+%D9%8A%D8%A7%D8%B1%D8%AF&query_place_id=ChIJkeiZN_5fXz4RZAHDKfltov8'
+  maps: 'https://maps.app.goo.gl/5wby2TkfLHsB8v8Q7'   /* their own link-in-bio pin */
 };
 
-/* ── the three the section-2 story runs through ── */
+/* ── the four the story runs through, in order ──
+   raspberry -> iced V60 -> acai -> strawberry matcha.
+   The raspberry cup is the one that lands out of the padel video. */
 export const FLAVORS = {
-  flatwhite: {
-    id: 'flatwhite', index: '01', name: 'Flat White',
-    tagline: 'Double ristretto under steamed milk. Nothing hiding.',
-    still: S + 'y-flatwhite.webp', ar: 0.73,
-    swatch: '#B98A56',
+  raspberry: {
+    id: 'raspberry', index: '01', name: 'Iced Americano with Raspberry',
+    tagline: 'Ethiopia Hambela over ice, with fresh raspberries.',
+    still: S + 'y-raspberry-lead.webp', ar: 0.78,
+    swatch: '#B8323F',
     palette: {
-      '--bg': '#F3ECDD', '--bg-deep': '#31240F', '--ink': '#24291C',
-      '--accent': '#6E8B4F', '--glow': '#C9A87C', '--dim': '#877A64',
-      '--display': '#B08B5F'
+      '--bg': '#EBDCC3', '--bg-deep': '#3A1418', '--ink': '#24291C',
+      '--accent': '#6E8B4F', '--glow': '#D9A08F', '--dim': '#8A7560',
+      '--display': '#B5474F'
     },
     callouts: [
-      { n: '01', h: 'In their top three', p: 'The Yard\u2019s own ordering page lists it under \u201Cpeople mostly buy\u201D.' },
-      { n: '02', h: 'Double ristretto', p: 'Two short shots under steamed milk. No syrup, no foam to hide behind.' },
-      { n: '03', h: 'One of nine hot coffees', p: 'Spanish latte, cortado, piccolo, cappuccino and the rest sit beside it.' }
+      { n: '01', h: 'Iced Americano with Raspberry', p: 'Ethiopia Hambela espresso pulled long over ice, with fresh raspberries in the cup. Notes of peach iced tea, mango, blackberry and pineapple.' }
     ]
   },
-  strawmatcha: {
-    id: 'strawmatcha', index: '02', name: 'Strawberry Matcha',
-    tagline: 'Ceremonial grade matcha under strawberry.',
-    still: S + 'y-strawmatcha.webp', ar: 0.78,
-    swatch: '#8FA65C',
+  v60: {
+    id: 'v60', index: '02', name: 'Iced V60 Ethiopia',
+    tagline: 'Hand-poured micro lot, chilled. Scored 89+.',
+    still: S + 'y-248901-dsc04400-jpeg.webp', ar: 0.734,
+    swatch: '#C47A3C',
     palette: {
-      '--bg': '#F2F0E1', '--bg-deep': '#28331B', '--ink': '#222A18',
-      '--accent': '#6E8B4F', '--glow': '#D6A2B4', '--dim': '#7C8168',
-      '--display': '#9DB070'
+      '--bg': '#F3E9D6', '--bg-deep': '#3D2410', '--ink': '#2A2318',
+      '--accent': '#6E8B4F', '--glow': '#E0B27A', '--dim': '#8A7860',
+      '--display': '#C4894E'
     },
     callouts: [
-      { n: '01', h: 'Ceremonial grade', p: 'Whisked to order, never poured from a premix.' },
-      { n: '02', h: 'Milk of your choice', p: 'Full fat, oat, almond or coconut — the coconut one is its own menu item.' },
-      { n: '03', h: 'One of seven matchas', p: 'Coconut, mango, salted vanilla foam, cheesecake, hot and plain iced.' }
+      { n: '02', h: 'Iced V60 Ethiopia', p: 'A reserve micro lot, hand-poured on a V60 and chilled. Peach, lychee, mandarin and a touch of earl grey. Cupping score 89+.' }
     ]
   },
   acai: {
@@ -98,9 +100,21 @@ export const FLAVORS = {
       '--display': '#977B90'
     },
     callouts: [
-      { n: '01', h: 'Not coffee at all', p: 'Blended acai, thick and cold. The one people order when they have had enough espresso.' },
-      { n: '02', h: 'First on their own list', p: 'The Yard\u2019s ordering page puts it at the top of \u201Cpeople mostly buy\u201D.' },
-      { n: '03', h: 'Sits with the cold drinks', p: 'Next to the taro shake, cascara, hibiscus and purple fizz.' }
+      { n: '03', h: 'Acai Smoothie', p: 'A smooth, refreshing berry blend with a subtle touch of peanut butter \u2014 rich yet balanced. Fruity, creamy and cold. No coffee in it at all.' }
+    ]
+  },
+  strawmatcha: {
+    id: 'strawmatcha', index: '04', name: 'Strawberry Matcha',
+    tagline: 'Ceremonial grade matcha under strawberry.',
+    still: S + 'y-strawmatcha.webp', ar: 0.78,
+    swatch: '#8FA65C',
+    palette: {
+      '--bg': '#F2F0E1', '--bg-deep': '#28331B', '--ink': '#222A18',
+      '--accent': '#6E8B4F', '--glow': '#D6A2B4', '--dim': '#7C8168',
+      '--display': '#9DB070'
+    },
+    callouts: [
+      { n: '04', h: 'Strawberry Matcha', p: 'Ceremonial grade matcha whisked to order, with the milk of your choice and a strawberry foam on top.' }
     ]
   }
 };
@@ -123,15 +137,12 @@ export const HERO_EXTRAS = {
 
 export const ALL_DRINKS = { ...FLAVORS, ...HERO_EXTRAS };
 
-export const STORY_ORDER = ['flatwhite', 'strawmatcha', 'acai'];
+export const STORY_ORDER = ['raspberry', 'v60', 'acai', 'strawmatcha'];
 
 /* The hero row, left to right. Slot 2 is the LEAD — the cup that travels
    into the second half of the section. */
 export const HERO_ROW = [
-  { slot: 'p1', row: 'up',  drink: 'strawmatcha' },
-  { slot: 'p2', row: 'up',  drink: 'flatwhite', lead: true },
-  { slot: 'p3', row: 'low', drink: 'cascarapeach' },
-  { slot: 'p4', row: 'low', drink: 'acai' }
+  { slot: 'p2', row: 'up',  drink: 'raspberry', lead: true }
 ];
 
 export const STATS = [

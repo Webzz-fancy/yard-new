@@ -3,18 +3,21 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { magnetic } from '../lib/reveal';
 import { lenis } from '../hooks/useLenis';
-import { storeLink, SHOP } from '../data/flavors';
-import { openStoreSheet } from './StoreModal';
+import { SHOP } from '../data/flavors';
+
+import { ORDER } from '../data/flavors';
+import { useLang } from '../hooks/useLang';
 
 const LINKS = [
-  { href: '#most-loved', label: 'Most Ordered' },
-  { href: '#menu', label: 'Menu' },
-  { href: '#visit', label: 'Visit' }
+  { href: '#menu', key: 'navMenu' },
+  { href: '#collab', key: 'navCollab' },
+  { href: 'loyalty', key: 'navLoyalty', external: true }
 ];
 
 export default function Header() {
   const ref = useRef(null);
   const [open, setOpen] = useState(false);
+  const { t, lang, toggle } = useLang();
 
   useEffect(() => {
     const header = ref.current;
@@ -76,21 +79,26 @@ export default function Header() {
   return (
     <header className="header" ref={ref}>
       <a className="brand" href="#top" data-cursor="link" aria-label={`${SHOP.name}, home`}>
-        <span className="brand__mark" aria-hidden="true" />
+        <img className="brand__logo brand__logo--palm" src={`${import.meta.env.BASE_URL}assets/stills/palm-green.webp`} alt="" aria-hidden="true" />
         <span className="brand__sr">{SHOP.name}</span>
       </a>
 
       <nav className="nav" aria-label="Primary">
-        {LINKS.map((l) => (
-          <a className="nav__link" href={l.href} key={l.href} data-cursor="link">{l.label}</a>
-        ))}
+        {LINKS.map((l) => l.external
+          ? <a className="nav__link" href={ORDER.loyalty} key={l.href} target="_blank" rel="noreferrer noopener" data-cursor="link">{t(l.key)}</a>
+          : <a className="nav__link" href={l.href} key={l.href} data-cursor="link">{t(l.key)}</a>
+        )}
       </nav>
 
-      <a className="cta" href={storeLink()} target="_blank" rel="noreferrer noopener" data-cursor="cta"
-        onClick={(e) => { e.preventDefault(); openStoreSheet(); }}>
-        <span className="cta__fill" />
-        <span className="cta__label">Get the app</span>
-      </a>
+      <div className="header__actions">
+        <button type="button" className="langbtn" onClick={toggle} data-cursor="link" aria-label="Switch language" lang={lang === 'en' ? 'ar' : 'en'}>
+          {lang === 'en' ? 'العربية' : 'English'}
+        </button>
+        <a className="cta" href={ORDER.drivu} target="_blank" rel="noreferrer noopener" data-cursor="cta">
+          <span className="cta__fill" />
+          <span className="cta__label">{t('order')}</span>
+        </a>
+      </div>
 
       {/* phone menu. The stylesheet always had a .burger rule but nothing
           ever rendered one, so below 760px the nav simply vanished. */}

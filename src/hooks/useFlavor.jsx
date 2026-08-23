@@ -5,8 +5,8 @@ import { tweenPalette } from '../lib/palette';
 const Ctx = createContext(null);
 
 export function FlavorProvider({ children }) {
-  const [active, setActive] = useState('latte');
-  const activeRef = useRef('latte');
+  const [active, setActive] = useState('raspberry');
+  const activeRef = useRef('raspberry');
 
   const setFlavor = useCallback((id, opts = {}) => {
     const d = ALL_DRINKS[id];

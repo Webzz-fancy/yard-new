@@ -41,9 +41,9 @@ export default function Loader({ onDone }) {
 
     /* progress tracks real asset loading */
     const state = { shown: 0 };
-    const prog = { crack: 0, fonts: 0 };
+    const prog = { crack: 0, fonts: 0, film: 0 };
     const paint = () => {
-      const t = prog.crack * 0.75 + prog.fonts * 0.25;
+      const t = prog.crack * 0.2 + prog.fonts * 0.1 + prog.film * 0.7;
       gsap.to(state, {
         shown: t, duration: 0.5, ease: 'power2.out',
         onUpdate: () => {
@@ -59,10 +59,16 @@ export default function Loader({ onDone }) {
     const pFonts = (document.fonts?.ready || Promise.resolve())
       .then(() => { prog.fonts = 1; paint(); });
 
+    /* the padel film is the hero now — it must be fully in before the glass
+       clears, or the first scroll would show blank frames */
+    const pFilm = hasSeq('padel')
+      ? getSequence('padel').load((v) => { prog.film = v; paint(); })
+      : Promise.resolve();
+
     let tl;
     const ceiling = new Promise((r) => setTimeout(r, 2200));
 
-    Promise.race([Promise.all([pCrack, pFonts]), ceiling]).then(() => {
+    Promise.all([pFilm, Promise.race([Promise.all([pCrack, pFonts]), ceiling])]).then(() => {
       crack.setCanvas(canvas);
       crack.size();
       crack.draw(0);                              // frame 0 = the intact bean

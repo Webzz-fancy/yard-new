@@ -34,11 +34,11 @@ export const MENU_CATEGORIES = [
   {
     id: "matcha", name: "Matcha",
     items: [
+      { n: "Strawberry Matcha", d: "Ceremonial matcha, milk of choice and strawberry foam.", img: "assets/stills/y-235590-dsc04347-1-jpg.webp", ar: 0.78 },
       { n: "Cheesecake Matcha", d: "", img: "assets/stills/y-275914-dsc04406-jpeg.webp", ar: 0.902 },
       { n: "Salted Vanilla Foam Matcha", d: "", img: "assets/stills/y-234407-dsc04346-jpeg.webp", ar: 0.787 },
       { n: "Iced Coconut Matcha Latte", d: "", img: "assets/stills/y-233824-img-0598-jpg.webp", ar: 0.754 },
       { n: "Mango Matcha", d: "", img: "assets/stills/y-249493-dsc04348-jpeg.webp", ar: 0.783 },
-      { n: "Strawberry Matcha", d: "", img: "assets/stills/y-235590-dsc04347-1-jpg.webp", ar: 0.78 },
       { n: "Iced Regular Matcha Latte", d: "", img: "assets/stills/y-233823-dsc04347-1-copy-jpeg.webp", ar: 0.781 },
       { n: "Hot Matcha Latte", d: "", img: "assets/stills/y-233825-dsc04559-1-jpg.webp", ar: 0.747 },
     ]
@@ -82,6 +82,7 @@ export const MENU_CATEGORIES = [
   {
     id: "pastries-pudding", name: "Pastries | Pudding",
     items: [
+      { n: "The Tennis Ball", d: "Our padel dessert: a tennis-ball mousse on a crunchy crumble base, with a chocolate racket. Served in the tray.", img: "assets/stills/y-tennisball-dessert.webp", ar: 1.373 },
       { n: "Banana Pudding", d: "", img: "assets/stills/y-237241-img-6486-jpeg.webp", ar: 0.488 },
       { n: "Aseeda", d: "", img: "assets/stills/y-233822-dsc04450-1-jpg.webp", ar: 0.777 },
       { n: "Mini Aseeda", d: "", img: "assets/stills/y-235589-dsc04572-jpeg.webp", ar: 0.739 },
@@ -136,6 +137,13 @@ export const MENU_CATEGORIES = [
     ]
   },
 ];
+
+/* The site shows the board in two halves: drinks after the story (Matcha
+   first — the Strawberry Matcha cup flies out of the story into it), then
+   sweet things after the padel-ball break (The Tennis Ball dessert first). */
+const byId = (id) => MENU_CATEGORIES.find((c) => c.id === id);
+export const DRINK_CATEGORIES = ['matcha', 'cold-drinks', 'cold-coffee', 'hot-coffee', 'manual-brew'].map(byId);   // Yard x Du dropped from the site at the client's request
+export const SWEET_CATEGORIES = ['pastries-pudding', 'breakfast', 'bowl'].map(byId);
 
 export const MENU_FLAT = MENU_CATEGORIES.flatMap((c) => c.items.map((i) => ({ ...i, cat: c.name })));
 

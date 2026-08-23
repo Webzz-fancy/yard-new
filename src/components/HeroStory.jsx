@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { FLAVORS, HERO_ROW, STORY_ORDER, ALL_DRINKS, STATS, storeLink } from '../data/flavors';
 import { openStoreSheet } from './StoreModal';
-import { assetV } from '../lib/frames';
+import { assetV, getSequence } from '../lib/frames';
 import { useFlavor } from '../hooks/useFlavor';
+import { useLang } from '../hooks/useLang';
 
 /* ══════════════════════════════════════════════════════════════════════
    HeroStory — the hero and the old "Section 2" are ONE pinned section.
@@ -29,11 +30,15 @@ export default function HeroStory() {
   const leadBoxRef = useRef(null);   // .hcup--lead — exits left at the hand-off
   const leadImgRef = useRef(null);
   const slotRef = useRef(null);      // invisible marker: a cup's box in half 2
-  const queueRefs = [useRef(null), useRef(null)];   // matcha, rose
+  const queueRefs = [useRef(null), useRef(null), useRef(null)];   // v60, acai, sharjah cloud
+  const videoRef = useRef(null);     // full-bleed canvas: the padel film
+  const audioRef = useRef(null);     // the film's own soundtrack, scrubbed with it
+  const [sound, setSound] = useState(true);   // on by default; the browser unlocks it on the first tap
   const heroLayer = useRef(null);
   const storyLayer = useRef(null);
   const idxRef = useRef(null);
   const { setFlavor, activeRef } = useFlavor();
+  const { t } = useLang();
 
   useEffect(() => {
     const root = rootRef.current;
@@ -46,45 +51,66 @@ export default function HeroStory() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const ctx = gsap.context(() => {
-      const upper = gsap.utils.toArray('.hcup--up');
-      const lower = gsap.utils.toArray('.hcup--low');
-      const sideCups = gsap.utils.toArray('.hcup--side');
-      const words = gsap.utils.toArray('.hero__h1 .w');
       const bigLines = gsap.utils.toArray('.story__big .sl > span');
       const panels = gsap.utils.toArray('.story__panel');
 
       /* ── entrance state ── */
-      gsap.set(words, { yPercent: 115 });
-      gsap.set(lower, { opacity: 0, yPercent: 92, scale: 0.9, rotation: -8 });
-      gsap.set(upper, { opacity: 0, yPercent: 26, scale: 0.9, rotation: -14 });
-      gsap.set('.hcopy .hseal, .hcopy .btn-orange, .hstats', { opacity: 0 });
       gsap.set(bigLines, { yPercent: 112 });
+      gsap.set(cup, { opacity: 0 });          // hidden until the film hands it over
       gsap.set(panels, { autoAlpha: 0 });
       gsap.set(storyLayer.current, { opacity: 0 });
 
-      /* ── hero entrance, fired once the loader hands over ── */
-      const intro = () => {
-        const tl = gsap.timeline();
-        tl.to(upper, {
-          opacity: 1, yPercent: 0, scale: 1, rotation: 0,
-          duration: 1.05, ease: 'back.out(1.3)', stagger: 0.1
-        });
-        tl.to(lower, {
-          opacity: 1, yPercent: 0, scale: 1, rotation: 0,
-          duration: 1.25, ease: 'back.out(1.15)', stagger: 0.12
-        }, '<0.28');
-        tl.to(words, { yPercent: 0, duration: 1.05, ease: 'expo.out', stagger: 0.1 }, '<0.1');
-        tl.to('.hcopy .hseal, .hcopy .btn-orange',
-          { opacity: 1, duration: 0.7, ease: 'power3.out', stagger: 0.08 }, '<0.35');
-        tl.to('.hstats', { opacity: 1, duration: 0.7, ease: 'power2.out' }, '<0.1');
-        return tl;
+      /* ── the film ──
+         240 frames of the padel opening, cover-fitted and scrubbed by the
+         first stretch of the pin. The last frame is the raspberry cup alone
+         on cream; at that point the canvas switches to a cup-free plate and
+         the real lead cup (the same cup, cut out) takes over and travels. */
+      const vcan = videoRef.current;
+      const film = getSequence('padel', vcan);
+      const plate = new Image();
+      plate.src = `${import.meta.env.BASE_URL}assets/stills/padel-plate.webp${assetV()}`;
+      const FW = 1280, FH = 720;
+      const CUP = { x: 476, y: 163, w: 322, h: 413 };   // cup box inside the last frame
+
+      const cover = () => {
+        const vw = pin.offsetWidth, vh = pin.offsetHeight;
+        const sc = Math.max(vw / FW, vh / FH);
+        return { sc, dx: (vw - FW * sc) / 2, dy: (vh - FH * sc) / 2 };
       };
+      const drawCover = (img) => {
+        const c = vcan, g = c.getContext('2d');
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = Math.round(c.offsetWidth * dpr), h = Math.round(c.offsetHeight * dpr);
+        if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+        if (!img?.complete || !img.naturalWidth) return false;
+        const { sc, dx, dy } = cover();
+        g.clearRect(0, 0, w, h);
+        g.drawImage(img, dx * dpr, dy * dpr, FW * sc * dpr, FH * sc * dpr);
+        return true;
+      };
+      let filmFrame = -1, onPlate = false;
+      const paintFilm = (p) => {
+        film._resolve?.();
+        const i = Math.round(Math.max(0, Math.min(1, p)) * (film.count - 1));
+        if (p >= 1) { if (!onPlate) { onPlate = drawCover(plate); filmFrame = -1; } return; }
+        onPlate = false;
+        if (i === filmFrame) return;
+        if (drawCover(film.images[i])) filmFrame = i;   // only cache once it really painted
+      };
+      const repaint = () => { const f = filmFrame; filmFrame = -1; if (onPlate) { onPlate = false; paintFilm(1); } else paintFilm(Math.max(0, f) / (film.count - 1)); };
+      /* place the lead cup exactly over the cup in the last frame */
+      const placeLead = () => {
+        const { sc, dx, dy } = cover();
+        const box = leadBoxRef.current;
+        gsap.set(box, { left: dx + CUP.x * sc, top: dy + CUP.y * sc, width: CUP.w * sc, right: 'auto' });
+      };
+      placeLead();
+      film.load().then(repaint);
+      plate.onload = () => { if (onPlate) drawCover(plate); };
+
+      const intro = () => gsap.timeline().fromTo(vcan, { opacity: 0 }, { opacity: 1, duration: 0.9, ease: 'power2.out' });
       window.__heroIntro = intro;
-      if (reduced) {
-        gsap.set([...upper, ...lower], { opacity: 1, yPercent: 0, scale: 1, rotation: 0 });
-        gsap.set(words, { yPercent: 0 });
-        gsap.set('.hcopy .hseal, .hcopy .btn-orange, .hstats', { opacity: 1 });
-      }
+      if (reduced) gsap.set(vcan, { opacity: 1 });
 
       /* ── measure where the lead cup must land in half 2 ──
          Measured from OFFSETS, never getBoundingClientRect(): the rect
@@ -102,6 +128,8 @@ export default function HeroStory() {
       };
 
       const measure = () => {
+        placeLead();
+        repaint();
         const slotEl = slotRef.current;
         if (!slotEl) return;
         const cupW = cup.offsetWidth, cupH = cup.offsetHeight;
@@ -125,12 +153,13 @@ export default function HeroStory() {
       measure();
 
       /* ── the master scrub ── */
-      const SEG = 4.2;          // scroll units per flavour segment
-      const TRAVEL = 2.2;       // hero -> story handoff
-      const HOLD = 1.0;         // hero holds before anything moves
+      const SEG = 3.5;          // scroll units per flavour segment (text wipes in by 0.45, hand-off at 0.70)
+      const TRAVEL = 3.2;       // film -> story handoff (slow, smooth descent)
+      const FILM = 9.0;         // the padel film scrubs over this stretch
+      const HOLD = FILM + 0.2;  // last frame holds a short beat before the cup lifts
       const n = STORY_ORDER.length;
       const per = touch ? 1.15 : 1.75;
-      const total = window.innerHeight * per * (n + 1.2);
+      const total = window.innerHeight * per * (n + 0.9) + window.innerHeight * (touch ? 2.4 : 3.0);
       const base = HOLD + TRAVEL;
       const handoffAt = (i) => base + i * SEG + SEG * 0.70;
 
@@ -145,8 +174,40 @@ export default function HeroStory() {
         for (let i = 0; i + 1 < n; i++) if (t >= handoffAt(i) + SEG * 0.16) idx = i + 1;
         return idx;
       };
+      /* sound: the film's own track follows the scrub. Browsers only allow
+         audio after a tap, so it stays silent until the Sound button. */
+      let audioT, lastT = -1;
+      const syncAudio = (p) => {
+        const a = audioRef.current;
+        if (!a || a.dataset.on !== '1') return;
+        if (p >= 1 || p <= 0) { a.pause(); return; }
+        const want = p * (a.duration || 10);
+        if (Math.abs(a.currentTime - want) > 0.35) a.currentTime = want;
+        if (want !== lastT) {
+          lastT = want;
+          if (a.paused) a.play().catch(() => {});
+          clearTimeout(audioT);
+          audioT = setTimeout(() => a.pause(), 220);     // stops when the wheel stops
+        }
+      };
+      /* browsers refuse audio until the user has clicked/tapped/typed once
+         (a wheel scroll does not count) — so the first such gesture unlocks
+         the track, and from then on it follows the scrub */
+      const unlock = () => {
+        const a = audioRef.current;
+        if (!a) return;
+        a.muted = false;
+        a.play().then(() => { a.pause(); a.dataset.unlocked = '1'; }).catch(() => {});
+        ['pointerdown', 'keydown', 'touchstart'].forEach((ev) => window.removeEventListener(ev, unlock));
+      };
+      ['pointerdown', 'keydown', 'touchstart'].forEach((ev) => window.addEventListener(ev, unlock, { passive: true }));
+
       const syncState = () => {
         const t = tl.time();
+        paintFilm(t / FILM);
+        syncAudio(t / FILM);
+        const handed = t >= FILM - 0.001;
+        gsap.set(cup, { opacity: handed ? 1 : 0 });
         const id = STORY_ORDER[segAt(t)];
         if (activeRef.current !== id) setFlavor(id, { duration: 0.9 });
         const el = idxRef.current;
@@ -177,13 +238,8 @@ export default function HeroStory() {
 
       /* HALF 1 holds, then exits */
       tl.to({}, { duration: HOLD });
-      tl.to(sideCups, {
-        opacity: 0, yPercent: 40, scale: 0.86,
-        duration: TRAVEL * 0.55, ease: 'power2.in', stagger: 0.05
-      }, HOLD);
-      tl.to('.hcopy, .hstats', {
-        opacity: 0, y: -30, duration: TRAVEL * 0.5, ease: 'power2.in'
-      }, HOLD);
+      tl.to('.hfilm__cue', { opacity: 0, duration: 0.3 }, 0.02);
+      tl.to(vcan, { opacity: 0, duration: TRAVEL * 0.7, ease: 'power2.inOut' }, HOLD + TRAVEL * 0.15);
 
       /* THE TRAVEL — the same cup descends into the centre of half 2 */
       tl.to(cup, {
@@ -192,7 +248,7 @@ export default function HeroStory() {
         scale: () => target.scale,
         rotation: 0,
         duration: TRAVEL,
-        ease: 'power1.inOut'
+        ease: 'power2.inOut'
       }, HOLD);
 
       /* half 2 fades up behind it */
@@ -204,11 +260,11 @@ export default function HeroStory() {
       /* HALF 2 — flavour segments. The cups do not rotate and the liquid
          does not move; the only motion is the straight horizontal hand-off
          and the callouts wiping in. */
-      const cupEls = [cup, queueRefs[0].current, queueRefs[1].current];
-      const boxEls = [leadBoxRef.current, queueRefs[0].current, queueRefs[1].current];
+      const cupEls = [cup, ...queueRefs.slice(0, n - 1).map((r) => r.current)];
+      const boxEls = [leadBoxRef.current, ...queueRefs.slice(0, n - 1).map((r) => r.current)];
 
-      // cups 1 and 2 wait small at mid-right, invisible until cued
-      [1, 2].forEach((i) => {
+      // the waiting cups sit small at mid-right, invisible until cued
+      cupEls.slice(1).forEach((_, k) => { const i = k + 1;
         gsap.set(cupEls[i], {
           x: () => preview.x, y: () => preview.y,
           scale: () => preview.scale, opacity: 0
@@ -314,45 +370,33 @@ export default function HeroStory() {
     <section className="herostory" id="hero" ref={rootRef}>
       <div className="herostory__pin" ref={pinRef}>
 
-        {/* ── HALF 1 ── */}
-        <div className="half half--hero" ref={heroLayer}>
-          <div className="hstats">
-            {STATS.map((st) => (
-              <div key={st.s}><b>{st.b}</b><span>{st.s}</span></div>
-            ))}
-          </div>
-
-          <div className="hcopy">
-            <span className="hseal" aria-hidden="true">
-              <svg viewBox="0 0 60 60" fill="none">
-                <circle cx="30" cy="30" r="28" stroke="currentColor" strokeWidth="1.5" />
-                <circle cx="30" cy="30" r="21" stroke="currentColor" strokeWidth="1" opacity=".5" />
-                <path d="M22 34c0-5 3.6-8 8-8s8 3 8 8-3.6 7-8 7-8-2-8-7Z" stroke="currentColor" strokeWidth="1.6" />
-                <path d="M26 22c-1.6-1.6 1.6-2.6 0-4.2M30 21c-1.6-2 1.6-3.3 0-5.4M34 22c-1.6-1.6 1.6-2.6 0-4.2"
-                  stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-            </span>
-            <h1 className="hero__h1">
-              <span className="hl"><span className="w">Pull up to</span></span>
-              <span className="hl"><span className="w">The Yard</span></span>
-            </h1>
-            <a className="btn-orange" href={storeLink()} id="heroCta" data-cursor="cta"
-               onClick={(e) => { e.preventDefault(); openStoreSheet(); }}
-               target="_blank" rel="noreferrer noopener"><span>Order on the app</span></a>
-          </div>
-
+        {/* ── HALF 1 ── the padel film, full bleed ── */}
+        <div className="half half--hero half--film" ref={heroLayer}>
+          <canvas className="hfilm" ref={videoRef} aria-hidden="true" />
+          <div className="hfilm__cue" aria-hidden="true"><span>Scroll</span><i /></div>
+          <audio ref={audioRef} src={`${import.meta.env.BASE_URL}assets/audio/padel.m4a`} preload="auto" data-on={sound ? '1' : '0'} />
+          <button type="button" className={`hfilm__sound${sound ? ' is-on' : ''}`} data-cursor="link"
+            onClick={() => {
+              const a = audioRef.current;
+              if (!a) return;
+              if (!sound) { a.muted = false; a.play().then(() => a.pause()).catch(() => {}); }
+              else a.pause();
+              setSound(!sound);
+            }}
+            aria-pressed={sound}>
+            <i /><span>{sound ? 'Sound on' : 'Sound off'}</span>
+          </button>
         </div>
 
         {/* ── HALF 2 ── same background, revealed by scroll ── */}
         <div className="half half--story" ref={storyLayer}>
           <div className="story__head">
-            <span className="story__counter"><i ref={idxRef}>01</i><em>/ 03</em></span>
+            <span className="story__counter"><i ref={idxRef}>01</i><em>/ 04</em></span>
           </div>
 
           <h2 className="story__big" aria-hidden="true">
-            <span className="sl"><span>THE THREE</span></span>
-            <span className="sl"><span>EVERYONE ORDERS</span></span>
-            <span className="sl"><span>ON REPEAT</span></span>
+            <span className="sl"><span>{t('lovedBy')[0]}</span></span>
+            <span className="sl"><span>{t('lovedBy')[1]}</span></span>
           </h2>
 
           <div className="caps" aria-hidden="true">
@@ -364,7 +408,7 @@ export default function HeroStory() {
             <div className="story__panel" key={id} data-flavor={id}>
               <div className="callouts">
                 {FLAVORS[id].callouts.map((c) => (
-                  <div className="callout" key={c.n}>
+                  <div className="callout callout--name" key={c.n}>
                     <span className="callout__n">{c.n}</span>
                     <h4>{c.h}</h4>
                     <p>{c.p}</p>
@@ -394,7 +438,7 @@ export default function HeroStory() {
         <div className="hrow">
           {HERO_ROW.map((c) =>
             c.lead ? (
-              <div className={`hcup hcup--${c.slot} hcup--${c.row} hcup--lead`} key={c.slot} ref={leadBoxRef}
+              <div className={`hcup hcup--lead hcup--film`} key={c.slot} ref={leadBoxRef}
                 style={{ '--ar': ALL_DRINKS[c.drink].ar }}>
                 <div className="hcup__inner" ref={leadRef}>
                   <img ref={leadImgRef}

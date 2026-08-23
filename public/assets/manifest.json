@@ -27,6 +27,20 @@
       "count": 44,
       "pad": 4,
       "ext": "webp"
+    },
+    "padel": {
+      "dir": "assets/frames/padel",
+      "base": "padel",
+      "count": 240,
+      "pad": 4,
+      "ext": "webp"
+    },
+    "dessert": {
+      "dir": "assets/frames/dessert",
+      "base": "dessert",
+      "count": 120,
+      "pad": 4,
+      "ext": "webp"
     }
   },
   "stills": {
@@ -76,5 +90,5 @@
       "h": 1100
     }
   },
-  "build": "1787149812"
+  "build": "padel2"
 }
