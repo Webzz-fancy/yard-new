@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { loadManifest, warmSequence } from './lib/frames';
+import { loadManifest, warmSequence, getSequence } from './lib/frames';
 import { setPaletteInstant } from './lib/palette';
 import { FLAVORS, STORY_ORDER } from './data/flavors';
 import { FlavorProvider } from './hooks/useFlavor';
@@ -47,9 +47,17 @@ export default function App() {
     document.body.classList.add('is-loading');
     /* No loading page for now: the padel film is warmed silently, then the
        page opens straight on frame one. */
+    /* Release the page as soon as the first fifth of the hero film is in —
+       the rest streams in behind the scroll (frames paint as they land).
+       Waiting for all 240 frames was ~9 s of blank page on a phone. */
+    let released = false;
+    const release = () => { if (!released) { released = true; onLoaderDone(); } };
     loadManifest()
-      .then(() => { setReady(true); return warmSequence('padel'); })
-      .then(() => onLoaderDone());
+      .then(() => {
+        setReady(true);
+        return getSequence('padel').load((p) => { if (p >= 0.2) release(); });
+      })
+      .then(() => { release(); return warmSequence('dessert'); });   // second film right behind the first
   }, []);
 
   const onLoaderDone = useCallback(() => {

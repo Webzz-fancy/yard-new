@@ -159,15 +159,23 @@ export default function Footer() {
           <div className="drive__car" aria-hidden="true">
             <div className="drive__lane">
               <i className="drive__road" />
-              <svg className="car car--suv" viewBox="0 0 300 120">
-                <path className="suv__body" d="M14 80V58c0-5 3-9 8-10l22-4 18-24c3-4 7-6 12-6h96c5 0 9 2 12 5l26 26 60 6c7 1 12 6 12 13v16c0 4-3 7-7 7H21c-4 0-7-3-7-7z"/>
-                <path className="suv__glass" d="M66 46l15-20c2-2 4-3 7-3h42v23H66zm72 0V23h40c3 0 5 1 7 3l21 20H138z"/>
-                <rect className="suv__trim" x="14" y="74" width="270" height="5" rx="2"/>
-                <rect className="suv__light" x="272" y="58" width="12" height="8" rx="2"/>
-                <rect className="suv__rack" x="78" y="14" width="110" height="4" rx="2"/>
-                <g className="car__wheel" transform="translate(76 92)"><circle r="17" className="car__tyre"/><circle r="8" className="car__rim"/><path d="M-11 0h22M0-11v22" className="car__spoke"/></g>
-                <g className="car__wheel" transform="translate(226 92)"><circle r="17" className="car__tyre"/><circle r="8" className="car__rim"/><path d="M-11 0h22M0-11v22" className="car__spoke"/></g>
-                <g className="car__arm"><path d="M178 50v-9l12-3v12z" className="car__skin"/><rect x="188" y="30" width="10" height="13" rx="1.5" className="car__cupb"/><rect x="186" y="28" width="14" height="3" rx="1" className="car__cupb"/></g>
+              <svg className="car car--jeep" viewBox="0 0 320 130">
+                {/* Wrangler, side view, facing right */}
+                <rect className="jeep__body" x="22" y="60" width="262" height="40" rx="4"/>
+                <path className="jeep__cab" d="M92 60V34c0-4 3-7 7-7h88c4 0 7 3 7 7v26z"/>
+                <path className="jeep__roof" d="M88 34h110v-5c0-3-2-5-5-5H93c-3 0-5 2-5 5z"/>
+                <path className="jeep__glass" d="M100 56V36h34v20zm42 0V36h44v20z"/>
+                <rect className="jeep__hood" x="194" y="48" width="86" height="14" rx="3"/>
+                <rect className="jeep__bumper" x="278" y="86" width="14" height="10" rx="2"/>
+                <rect className="jeep__bumper" x="28" y="86" width="14" height="10" rx="2"/>
+                <circle className="jeep__light" cx="276" cy="72" r="6"/>
+                <g className="jeep__grille">{Array.from({ length: 7 }, (_, i) => <rect key={i} x={246 + i * 4.4} y="64" width="2.2" height="16" rx="1"/>)}</g>
+                <rect className="jeep__mirror" x="186" y="48" width="6" height="8" rx="1.5"/>
+                <path className="jeep__arch" d="M44 100a26 26 0 0 1 52 0zM212 100a26 26 0 0 1 52 0z"/>
+                <circle className="jeep__spare" cx="24" cy="74" r="14"/><circle className="jeep__spare-rim" cx="24" cy="74" r="6"/>
+                <g className="car__wheel" transform="translate(70 100)"><circle r="21" className="car__tyre"/><circle r="9" className="car__rim"/><path d="M-13 0h26M0-13v26" className="car__spoke"/></g>
+                <g className="car__wheel" transform="translate(238 100)"><circle r="21" className="car__tyre"/><circle r="9" className="car__rim"/><path d="M-13 0h26M0-13v26" className="car__spoke"/></g>
+                <g className="car__arm"><path d="M152 58v-9l12-3v12z" className="car__skin"/><rect x="162" y="38" width="10" height="13" rx="1.5" className="car__cupb"/><rect x="160" y="36" width="14" height="3" rx="1" className="car__cupb"/></g>
               </svg>
             </div>
           </div>

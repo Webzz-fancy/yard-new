@@ -79,7 +79,7 @@ export default function BallBreak() {
       const placeTray = () => gsap.set(tray, { ...trayInFilm(), x: 0, y: 0, scale: 1 });
       placeTray();
 
-      ScrollTrigger.create({ trigger: root, start: 'top bottom+=150%', once: true, onEnter: () => film.load().then(repaint) });
+      film.load().then(repaint);                     // already warming from App — this just paints frame one when it lands
       window.addEventListener('resize', () => { repaint(); placeTray(); });
 
       /* ── the pin: emerge → film → lift ── */

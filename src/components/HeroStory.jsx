@@ -371,6 +371,7 @@ export default function HeroStory() {
 
         {/* ── HALF 1 ── the padel film, full bleed ── */}
         <div className="half half--hero half--film" ref={heroLayer}>
+          <h1 className="sr-only">The Yard — specialty coffee drive-thru at SPARK, Sharjah</h1>
           <canvas className="hfilm" ref={videoRef} aria-hidden="true" />
           <div className="hfilm__cue" aria-hidden="true"><span>Scroll</span><i /></div>
           <audio ref={audioRef} src={`${import.meta.env.BASE_URL}assets/audio/padel.m4a`} preload="auto" data-on="1" />
