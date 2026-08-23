@@ -9,7 +9,6 @@ import { LangProvider, useLang } from './hooks/useLang';
 import { ScrollTrigger as ST } from 'gsap/ScrollTrigger';
 import { useLenis, lenis } from './hooks/useLenis';
 
-import Cursor from './components/Cursor';
 import Header from './components/Header';
 import HeroStory from './components/HeroStory';
 import Menu from './components/Menu';
@@ -69,7 +68,6 @@ export default function App() {
         <span className="ambient__blob ambient__blob--a" />
         <span className="ambient__blob ambient__blob--b" />
       </div>
-      <Cursor />
       {ready && (
         <>
           <Header />
