@@ -87,7 +87,7 @@ export default function Menu({
     }, 0.22);
 
     /* keep the new block's head under the sticky pills */
-    const y = toGroup.getBoundingClientRect().top + window.scrollY - 128;
+    const y = toGroup.getBoundingClientRect().top + window.scrollY - 140;   // stuck header (70) + pills
     const l = lenis();
     if (l) l.scrollTo(y, { duration: 0.9 });
     else window.scrollTo({ top: y, behavior: 'smooth' });
