@@ -585,6 +585,19 @@ ol, ul { list-style: none; }
   font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--dim);
 }
 
+.site-credit {
+  display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding-top: 18px; margin-top: 18px; border-top: 1px solid var(--hair);
+  opacity: 0.7; transition: opacity .3s ease;
+}
+.site-credit:hover { opacity: 1; }
+.site-credit-made { display: flex; align-items: center; gap: 0.6rem; }
+.site-credit-text {
+  font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--dim);
+}
+.site-credit-logo { height: 1.15rem; width: auto; display: block; }
+.site-credit-robot { height: 1.7rem; width: auto; display: block; }
+
 /* ══ RESPONSIVE ═════════════════════════════════════════════════
    Pins/scrubs are simplified (not removed) on touch — see js/main.js
    ══════════════════════════════════════════════════════════════ */
@@ -2853,4 +2866,6 @@ body.is-loading .header { opacity: 0; pointer-events: none; }
 .footer--kiosk .footer__links { border-top-color: rgba(243,231,214,.22); }
 .footer--kiosk .footer__link { color: #F3E7D6; text-shadow: 0 1px 10px rgba(0,0,0,.6); }
 .footer--kiosk .footer__base { color: #E8DCC8; text-shadow: 0 1px 10px rgba(0,0,0,.6); }
+.footer--kiosk .site-credit { border-top-color: rgba(243,231,214,.22); }
+.footer--kiosk .site-credit-text { color: #E8DCC8; text-shadow: 0 1px 10px rgba(0,0,0,.6); }
 @media (max-width: 900px) { .drive--v4 { grid-template-columns: 1fr; } .drive--v4 .drive__info { justify-self: stretch; } }

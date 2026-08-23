@@ -213,6 +213,14 @@ export default function Footer() {
           <span>© 2026 {SHOP.name} · {SHOP.nameAr} · Sharjah</span>
           <span>Drive-thru · 7:00 — 00:00 daily</span>
         </div>
+
+        <div className="site-credit">
+          <span className="site-credit-made">
+            <span className="site-credit-text">Made by</span>
+            <img src={`${import.meta.env.BASE_URL}assets/credit/clauselogo.png`} alt="Clause &amp; Code" className="site-credit-logo" />
+          </span>
+          <img src={`${import.meta.env.BASE_URL}assets/credit/robot-mark.png`} alt="" className="site-credit-robot" />
+        </div>
       </div>
     </footer>
   );
