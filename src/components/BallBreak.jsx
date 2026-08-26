@@ -119,7 +119,10 @@ export default function BallBreak() {
       ScrollTrigger.create({
         trigger: target(),
         start: () => tl.scrollTrigger.end,   // the moment the film's pin lets go…
-        end: 'top 150px',                    // …until the card parks under the pills
+        end: 'top 62%',                      // …until the card has risen into view —
+                                             // land THERE and stop; chasing it all the
+                                             // way to the pills kept the tray drifting
+                                             // down the screen long after "its place"
         scrub: true,
         invalidateOnRefresh: true,
         onUpdate: (self) => {
