@@ -1,0 +1,33 @@
+{
+ "sequences": {
+  "bean-crack": {
+   "dir": "assets/frames/bean-crack",
+   "base": "bean-crack",
+   "count": 27,
+   "pad": 4,
+   "ext": "webp"
+  },
+  "padel": {
+   "dir": "assets/frames/padel",
+   "base": "padel",
+   "count": 240,
+   "pad": 4,
+   "ext": "webp"
+  },
+  "dessert": {
+   "dir": "assets/frames/dessert",
+   "base": "dessert",
+   "count": 120,
+   "pad": 4,
+   "ext": "webp"
+  }
+ },
+ "stills": {
+  "bean": {
+   "src": "assets/stills/bean.webp",
+   "w": 526,
+   "h": 420
+  }
+ },
+ "build": "padel3"
+}
