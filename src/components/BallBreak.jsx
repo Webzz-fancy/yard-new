@@ -87,12 +87,15 @@ export default function BallBreak() {
 
       /* ── the pin: emerge → film → lift ── */
       const EMERGE = 0.06, FILM = 0.82;   // quick fade-up from the cream, film to 82%, last 18% = tray holds + line wipes in
+      let dropST;                         // the drop trigger below — once it owns the tray, this timeline must not touch opacity
       const tl = gsap.timeline({
         onUpdate: () => {
           const p = tl.progress();
           paint(p < EMERGE ? 0 : (p - EMERGE) / (FILM - EMERGE));
           const lifted = p >= FILM - 0.001;
-          gsap.set(tray, { opacity: lifted ? 1 : 0 });
+          /* scrub 0.8 keeps this firing after the pin lets go — without the
+             guard it re-shows the tray the drop trigger just hid on landing */
+          if (!dropST || dropST.progress === 0) gsap.set(tray, { opacity: lifted ? 1 : 0 });
         },
         scrollTrigger: {
           trigger: root, start: 'top top',
@@ -116,7 +119,7 @@ export default function BallBreak() {
         const s = Math.min((r.width - pad * 2) / a.width, (r.height - pad * 2) / a.height);
         return { left: r.left + (r.width - a.width * s) / 2, top: r.top + (r.height - a.height * s) / 2, width: a.width * s };
       };
-      ScrollTrigger.create({
+      dropST = ScrollTrigger.create({
         trigger: target(),
         start: () => tl.scrollTrigger.end,   // the moment the film's pin lets go…
         end: 'top 62%',                      // …until the card has risen into view —
