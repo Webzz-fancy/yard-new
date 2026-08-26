@@ -125,7 +125,14 @@ export default function BallBreak() {
         onUpdate: (self) => {
           const tg = target();
           if (!tg) return;
+          /* the tray must never hover detached mid-screen: its start point
+             rides UP with the departing film (fixed-position minus the
+             scroll travelled since release), so it leaves the viewport as
+             part of the film's motion and arcs down into the rising card
+             in one continuous move. */
           const a = trayInFilm();
+          const scrolled = self.scroll() - self.start;
+          a.top -= scrolled;
           const b = fit(a, tg.getBoundingClientRect());
           const e = gsap.parseEase('power2.inOut')(self.progress);
           gsap.set(tray, {
