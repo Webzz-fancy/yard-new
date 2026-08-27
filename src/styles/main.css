@@ -2578,7 +2578,9 @@ body {
 .drive__lane { position: relative; height: clamp(170px, 16vw, 230px); overflow: hidden; }
 .drive__road { position: absolute; left: 0; right: 0; bottom: 18px; height: 2px; background: rgba(243,231,214,.35);
   background-image: repeating-linear-gradient(90deg, rgba(243,231,214,.9) 0 26px, transparent 26px 44px); background-size: 44px 2px; }
-.car { position: absolute; left: 0; bottom: 6px; width: clamp(240px, 24vw, 360px); height: auto; will-change: transform; z-index: 2; }
+/* left/top/width come from Footer.jsx — they are artwork anchors, not layout.
+   Never give this a `bottom` as well: with height:auto the two would stretch it. */
+.car { position: absolute; left: 0; top: 0; height: auto; will-change: transform; z-index: 2; }
 .car__body { fill: #6E8B4F; }
 .car__glass { fill: #F3E7D6; opacity: .9; }
 .car__light { fill: #F7D96B; }
@@ -2648,10 +2650,9 @@ body {
 .kiosk__word { font: 700 10px/1 var(--d), sans-serif; letter-spacing: .18em; fill: #1E1A14; }
 .kiosk__hand rect, .car__cupb { fill: #1E1A14; }
 .kiosk__hand path, .car__skin { fill: #D9A87C; }
-.car__arm { opacity: 0; }
-.drive__lane.is-served .car__arm, .drive__lane.is-served .kiosk__hand { opacity: 1; }
+.car__arm { opacity: 0; transition: opacity .4s; }
+.kioskscene.is-served .car__arm { opacity: 1; }   /* parked at the window: the cup goes out */
 .kiosk__hand { opacity: 0; transition: opacity .4s; }
-.car__arm { transition: opacity .4s; }
 .drive__road { bottom: 20px; }
 
 /* hero film sound toggle */
@@ -2795,19 +2796,47 @@ body.is-loading .header { opacity: 0; pointer-events: none; }
 .loveus__h { font-family: var(--d); font-weight: 700; font-size: clamp(34px, 5vw, 64px); letter-spacing: -.03em; line-height: 1; margin-bottom: 12px; }
 .loveus__p { font-size: 14.5px; line-height: 1.6; color: color-mix(in srgb, var(--kraft-ink) 70%, transparent); max-width: 44ch; margin: 0 auto 24px; }
 
-/* ══ FOOTER v4 — the kiosk illustration is the background ════════════ */
-.footer--kiosk { background-size: cover; background-position: center 40%; background-repeat: no-repeat; position: relative; }
-.footer--kiosk::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-  background: linear-gradient(180deg, rgba(10,18,34,.78) 0%, rgba(10,18,34,.35) 35%, rgba(10,18,34,.45) 70%, rgba(10,18,34,.9) 100%); }
+/* ══ FOOTER — the kiosk scene ════════════════════════════════════════
+   The illustration is a real <img> in a band of its own, not a
+   background: the jeep is anchored to points in the ARTWORK's pixel
+   grid (see Footer.jsx) and JS maps them through this image's live
+   rect. So CSS is free to reframe the band per breakpoint — crop
+   wherever you like and the car still lands on the painted ground.
+
+   Desktop shows artwork rows 200–640: the sign, the window, the
+   counter, and the paving the jeep parks on. */
+/* the page's --bg-deep is chocolate; below this scene it has to be night */
+.footer--kiosk { position: relative; --kiosk-night: #0C1524; background: var(--kiosk-night); }
 .footer--kiosk .footer__steam, .footer--kiosk .footer__pour { display: none; }
 .footer--kiosk .footer__reveal { z-index: 3; }
-.drive--v4 { grid-template-columns: 1.1fr 1fr; gap: clamp(24px, 4vw, 64px); align-items: end; padding: 4vh 0 6vh; border-top: 1px solid rgba(243,231,214,.14); }
-.drive--v4 .drive__lane { height: clamp(150px, 14vw, 200px); overflow: visible; }
-.drive--v4 .car--suv { width: clamp(260px, 26vw, 400px); bottom: 0; left: 0; }
-.drive--v4 .drive__road { left: 0; right: 0; bottom: 10px; }
-.drive--v4 .drive__info { padding-bottom: 10px; }
-.drive--v4 .drive__h { font-size: clamp(32px, 3.4vw, 50px); text-shadow: 0 2px 16px rgba(0,0,0,.4); }
-.drive--v4 .drive__p { color: #E8DCC8; }
+.footer__stage { position: relative; }
+.kioskscene { position: relative; width: 100%; aspect-ratio: 1024 / 440; overflow: hidden; }
+/* max-width:none defeats the global `img { max-width: 100% }`, which would
+   otherwise clamp the zoomed framing below and silently undo the crop */
+.kioskscene__art { position: absolute; left: 0; top: -45.45%; width: 100%; max-width: none;
+  aspect-ratio: 1024 / 768; height: auto; display: block; }
+/* darkens the sky behind the header and melts the ground into the footer */
+.kioskscene::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(10,18,34,.62) 0%, rgba(10,18,34,0) 28%, rgba(10,18,34,0) 84%, var(--kiosk-night) 100%); }
+
+/* the details panel floats on the scene, clear of the jeep's lane */
+.kiosk__card { position: absolute; z-index: 4; right: var(--gut); top: 7%; width: min(430px, 38%);
+  padding: 26px 28px 24px; border-radius: 14px;
+  background: rgba(10, 18, 30, .62); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(243,231,214,.16); box-shadow: 0 20px 50px rgba(0,0,0,.35); }
+.kiosk__card .drive__h { font-size: clamp(30px, 3.2vw, 48px); margin: 8px 0 14px; text-shadow: none; }
+.kiosk__card .drive__p, .kiosk__card .footer__lab { color: #EFE4D2; }
+.kiosk__card .drive__p { margin-bottom: 8px; }
+
+/* phones: zoom the framing to artwork x 0–800 so the window and the
+   parked jeep stay legible, and drop the panel below the scene */
+@media (max-width: 900px) {
+  .kiosk__card { position: static; width: auto; margin: 20px var(--gut) 0; }
+}
+@media (max-width: 720px) {
+  .kioskscene { aspect-ratio: 800 / 520; }
+  .kioskscene__art { width: 128%; top: -34.6%; }
+}
 .footer__links { display: flex; flex-wrap: wrap; gap: 10px 28px; padding: 22px 0; border-top: 1px solid rgba(243,231,214,.14); }
 .footer__link { font-size: 12.5px; letter-spacing: .06em; text-transform: uppercase; color: #E8DCC8; transition: color .3s; }
 .footer__link:hover { color: var(--accent); }
@@ -2841,28 +2870,18 @@ body.is-loading .header { opacity: 0; pointer-events: none; }
 .loveus__btn:hover { transform: translateY(-2px); background: #fff; }
 @media (max-width: 900px) { .loveus__grid { grid-template-columns: 1fr; } .loveus__right { justify-self: start; } .loveus__palm { width: 60vw; right: -20%; } }
 
-/* footer readability: details sit far right on a dark glass panel */
-.drive--v4 { grid-template-columns: 1fr minmax(320px, 460px); justify-content: space-between; align-items: end; }
-.drive--v4 .drive__info { justify-self: end; padding: 28px 30px 26px; border-radius: 14px;
-  background: rgba(10, 18, 30, .62); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(243,231,214,.16); box-shadow: 0 20px 50px rgba(0,0,0,.35); }
-.drive--v4 .drive__h { text-shadow: none; }
-.drive--v4 .drive__p, .drive--v4 .footer__lab { color: #EFE4D2; }
 .footer__links, .socials { position: relative; }
 .footer--kiosk .footer__links { border-top-color: rgba(243,231,214,.22); }
 .footer--kiosk .footer__link { color: #F3E7D6; text-shadow: 0 1px 10px rgba(0,0,0,.6); }
 .footer--kiosk .footer__base { color: #E8DCC8; text-shadow: 0 1px 10px rgba(0,0,0,.6); }
 .footer--kiosk .site-credit { border-top-color: rgba(243,231,214,.22); }
 .footer--kiosk .site-credit-text { color: #E8DCC8; text-shadow: 0 1px 10px rgba(0,0,0,.6); }
-@media (max-width: 900px) { .drive--v4 { grid-template-columns: 1fr; } .drive--v4 .drive__info { justify-self: stretch; } }
 
 /* normal mouse: the custom cursor was removed */
 html, body { cursor: auto; }
 a, button, [data-cursor] { cursor: pointer; }
 
 /* ══ Jeep Wrangler (white) + footer action buttons aligned ═══════════ */
-.car--jeep { width: clamp(280px, 28vw, 420px); }
-.drive--v4 .car--jeep { bottom: 0; left: 0; }
 .jeep__body, .jeep__cab, .jeep__hood { fill: #F4F1EA; }
 .jeep__roof { fill: #E6E1D6; }
 .jeep__glass { fill: #2E3E5C; opacity: .85; }
@@ -2874,9 +2893,6 @@ a, button, [data-cursor] { cursor: pointer; }
 .drive__actions { display: flex; align-items: center; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
 .drive__actions .btn-orange, .drive__actions .btn-line { margin: 0; height: 46px; padding: 0 20px; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; letter-spacing: .06em; border-radius: 999px; white-space: nowrap; }
 .drive__actions .btn-orange span { display: inline; }
-.drive--v4 .drive__info { padding: 26px 28px 24px; }
-.drive--v4 .drive__h { margin: 8px 0 14px; }
-.drive--v4 .drive__p { margin-bottom: 8px; }
 
 /* cards with no Drivu photo: the palm on kraft, not an empty box */
 .mcard__img--btn .mcard__mark { display: grid; place-items: center; width: 100%; height: 100%; }

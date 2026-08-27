@@ -27,6 +27,21 @@ const COLS = [
    image is a pastry, not the lane. Film still used as the placeholder. */
 const KIOSK_IMG = `${import.meta.env.BASE_URL}assets/stills/kiosk-night.jpg`;
 
+/* ── the kiosk artwork's own pixel grid ──────────────────────────────
+   Every anchor below is written in artwork pixels, never in layout
+   pixels. The illustration paints the ground at y≈546 (where the
+   concrete counter ends) and the service window at x 105–275, so the
+   jeep parks with its wheels at y=600 — clear of the counter above and
+   of the foreground plants that start at y≈606. placeCar() maps these
+   through the image's live rect, which is what keeps the car standing
+   on the painted ground at every viewport size and under any crop the
+   CSS picks. Position it by layout flow instead and it drifts: that is
+   the bug this replaced. */
+const ART_W = 1024;
+const CAR_AR = 130 / 320;                          // the jeep svg's height ÷ width
+const CAR = { w: 330, parkX: 265, groundY: 600 };  // width · parked centre · wheel line
+const ENTRY_X = 1240;                              // starts off frame: 1024 + half a car
+
 const QUICK = [
   { id: 'collab', k: 'qCollab', ks: 'qCollabS', href: ORDER.instagram   /* DM on Instagram until a collab email is confirmed */ },
   { id: 'events', k: 'qEvents', ks: 'qEventsS', href: ORDER.instagram },
@@ -35,6 +50,9 @@ const QUICK = [
 
 export default function Footer() {
   const ref = useRef(null);
+  const sceneRef = useRef(null);
+  const artRef = useRef(null);
+  const carRef = useRef(null);
   const pourRef = useRef(null);
   const steamRef = useRef(null);
   const { t } = useLang();
@@ -43,35 +61,49 @@ export default function Footer() {
     const footer = ref.current;
     const touch = window.matchMedia('(hover: none)').matches;
     const ctx = gsap.context(() => {
-      gsap.from('.footer__col', {
-        y: 34, opacity: 0, duration: 0.85, ease: 'power3.out', stagger: 0.1,
-        scrollTrigger: { trigger: '.footer__cols', start: 'top 92%' }
-      });
-      gsap.from('.qlink', {
-        y: 26, opacity: 0, duration: 0.7, ease: 'power3.out', stagger: 0.08,
-        scrollTrigger: { trigger: '.footer__quick', start: 'top 92%' }
-      });
+      /* ── the drive-thru: the jeep enters from the right and pulls up to
+         the painted window on the left, wheels turning, then idles ── */
+      const scene = sceneRef.current, art = artRef.current, car = carRef.current;
+      if (scene && art && car) {
+        /* Anchor the car to the ARTWORK, not to the layout. Reading the
+           image's live rect means one source of truth for "where is
+           artwork pixel (x,y) right now", so a reframe in CSS needs no
+           change here. Returns the drive distance in layout px. */
+        const placeCar = () => {
+          const sr = scene.getBoundingClientRect();
+          const ar = art.getBoundingClientRect();
+          if (!ar.width) return 0;
+          const s = ar.width / ART_W;
+          const w = CAR.w * s, h = w * CAR_AR;
+          /* plain style writes, not gsap.set: this runs while gsap is
+             resolving the tween's start value, and left/top/width must
+             stay clear of the transform it is about to cache */
+          car.style.width = `${w}px`;
+          car.style.left = `${(ar.left - sr.left) + CAR.parkX * s - w / 2}px`;
+          car.style.top = `${(ar.top - sr.top) + CAR.groundY * s - h}px`;
+          return (ENTRY_X - CAR.parkX) * s;
+        };
 
-      /* ── the car: drives along the lane as the drive-thru block scrolls in,
-         wheels turning, then idles with a gentle bob at the window ── */
-      const car = footer.querySelector('.car');
-      if (car) {
-        const lane = footer.querySelector('.drive__lane');
-        /* drive to the end of the lane — the kiosk is the next column over */
-        /* SVGs have no offsetWidth — measure with rects */
-        const dist = () => Math.max(120, lane.getBoundingClientRect().width - car.getBoundingClientRect().width + 10);
-        gsap.fromTo(car, { x: 0 }, {
-          x: dist, ease: 'power2.out',
-          scrollTrigger: {
-            trigger: '.drive', start: 'top 85%', end: 'top 25%', scrub: 1, invalidateOnRefresh: true,
-            onUpdate: (self) => lane.classList.toggle('is-served', self.progress > 0.96)
-          }
-        });
+        gsap.set(car, { scaleX: -1 });   // the window is on the LEFT: face the way it drives
+        gsap.fromTo(car,
+          { x: () => placeCar() },       // re-measured on every refresh, so parked is always exact
+          {
+            x: 0, ease: 'power2.out',
+            scrollTrigger: {
+              trigger: scene, start: 'top 92%', end: 'top 30%', scrub: 1, invalidateOnRefresh: true,
+              onUpdate: (self) => scene.classList.toggle('is-served', self.progress > 0.96)
+            }
+          });
+        /* the svg is mirrored, so a positive spin reads as rolling left */
         gsap.to('.car__wheel', {
           rotation: 360 * 6, ease: 'none', transformOrigin: '50% 50%',
-          scrollTrigger: { trigger: '.drive', start: 'top 85%', end: 'top 25%', scrub: 1 }
+          scrollTrigger: { trigger: scene, start: 'top 92%', end: 'top 30%', scrub: 1 }
         });
         gsap.to(car, { y: -2, duration: 0.9, yoyo: true, repeat: -1, ease: 'sine.inOut' });
+
+        if (!art.complete) {
+          art.addEventListener('load', () => { placeCar(); ScrollTrigger.refresh(); }, { once: true });
+        }
       }
 
       const cv = pourRef.current;
@@ -138,50 +170,48 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="footer footer--kiosk" ref={ref} style={{ backgroundImage: `url(${KIOSK_IMG})` }}>
+    <footer className="footer footer--kiosk" ref={ref}>
       <canvas className="footer__steam" ref={steamRef} aria-hidden="true" />
       <div className="footer__pour"><canvas ref={pourRef} aria-hidden="true" /></div>
-      <div className="footer__reveal">
-        {/* ── drive-thru: details + quick links on the LEFT, the car pulling up
-              to the window on the RIGHT ── */}
-        {/* ── drive-thru on the kiosk illustration: car LEFT · details MIDDLE ── */}
-        <div className="drive drive--v4">
-          <div className="drive__car" aria-hidden="true">
-            <div className="drive__lane">
-              <i className="drive__road" />
-              <svg className="car car--jeep" viewBox="0 0 320 130">
-                {/* Wrangler, side view, facing right */}
-                <rect className="jeep__body" x="22" y="60" width="262" height="40" rx="4"/>
-                <path className="jeep__cab" d="M92 60V34c0-4 3-7 7-7h88c4 0 7 3 7 7v26z"/>
-                <path className="jeep__roof" d="M88 34h110v-5c0-3-2-5-5-5H93c-3 0-5 2-5 5z"/>
-                <path className="jeep__glass" d="M100 56V36h34v20zm42 0V36h44v20z"/>
-                <rect className="jeep__hood" x="194" y="48" width="86" height="14" rx="3"/>
-                <rect className="jeep__bumper" x="278" y="86" width="14" height="10" rx="2"/>
-                <rect className="jeep__bumper" x="28" y="86" width="14" height="10" rx="2"/>
-                <circle className="jeep__light" cx="276" cy="72" r="6"/>
-                <g className="jeep__grille">{Array.from({ length: 7 }, (_, i) => <rect key={i} x={246 + i * 4.4} y="64" width="2.2" height="16" rx="1"/>)}</g>
-                <rect className="jeep__mirror" x="186" y="48" width="6" height="8" rx="1.5"/>
-                <path className="jeep__arch" d="M44 100a26 26 0 0 1 52 0zM212 100a26 26 0 0 1 52 0z"/>
-                <circle className="jeep__spare" cx="24" cy="74" r="14"/><circle className="jeep__spare-rim" cx="24" cy="74" r="6"/>
-                <g className="car__wheel" transform="translate(70 100)"><circle r="21" className="car__tyre"/><circle r="9" className="car__rim"/><path d="M-13 0h26M0-13v26" className="car__spoke"/></g>
-                <g className="car__wheel" transform="translate(238 100)"><circle r="21" className="car__tyre"/><circle r="9" className="car__rim"/><path d="M-13 0h26M0-13v26" className="car__spoke"/></g>
-                <g className="car__arm"><path d="M152 58v-9l12-3v12z" className="car__skin"/><rect x="162" y="38" width="10" height="13" rx="1.5" className="car__cupb"/><rect x="160" y="36" width="14" height="3" rx="1" className="car__cupb"/></g>
-              </svg>
-            </div>
-          </div>
 
-          <div className="drive__info">
-            <span className="footer__lab">{t('driveLab')}</span>
-            <p className="drive__h">{t('openDaily')}<br/><span dir="ltr">7:00 — 00:00</span></p>
-            <p className="drive__p">{SHOP.area}<br/>Near Innovation Street, University City</p>
-            <p className="drive__p"><a href={SHOP.phoneHref} className="flink" data-cursor="link" dir="ltr">{SHOP.phone}</a> · {t('phoneOrders')}</p>
-            <div className="drive__actions">
-              <a className="btn-orange" href={SHOP.maps} target="_blank" rel="noreferrer noopener" data-cursor="cta"><span>{t('directions')}</span></a>
-              <a className="btn-line" href={ORDER.drivu} target="_blank" rel="noreferrer noopener" data-cursor="cta">{t('order')} →</a>
-            </div>
-          </div>
+      {/* ── the drive-thru scene: the illustration is a real image in its own
+            band, and the jeep is anchored to points inside it ── */}
+      <div className="footer__stage">
+        <div className="kioskscene" ref={sceneRef} aria-hidden="true">
+          <img className="kioskscene__art" ref={artRef} src={KIOSK_IMG} alt="" />
+          <svg className="car car--jeep" ref={carRef} viewBox="0 0 320 130">
+          {/* Wrangler, side view, drawn facing right — mirrored in JS */}
+          <rect className="jeep__body" x="22" y="60" width="262" height="40" rx="4"/>
+          <path className="jeep__cab" d="M92 60V34c0-4 3-7 7-7h88c4 0 7 3 7 7v26z"/>
+          <path className="jeep__roof" d="M88 34h110v-5c0-3-2-5-5-5H93c-3 0-5 2-5 5z"/>
+          <path className="jeep__glass" d="M100 56V36h34v20zm42 0V36h44v20z"/>
+          <rect className="jeep__hood" x="194" y="48" width="86" height="14" rx="3"/>
+          <rect className="jeep__bumper" x="278" y="86" width="14" height="10" rx="2"/>
+          <rect className="jeep__bumper" x="28" y="86" width="14" height="10" rx="2"/>
+          <circle className="jeep__light" cx="276" cy="72" r="6"/>
+          <g className="jeep__grille">{Array.from({ length: 7 }, (_, i) => <rect key={i} x={246 + i * 4.4} y="64" width="2.2" height="16" rx="1"/>)}</g>
+          <rect className="jeep__mirror" x="186" y="48" width="6" height="8" rx="1.5"/>
+          <path className="jeep__arch" d="M44 100a26 26 0 0 1 52 0zM212 100a26 26 0 0 1 52 0z"/>
+          <circle className="jeep__spare" cx="24" cy="74" r="14"/><circle className="jeep__spare-rim" cx="24" cy="74" r="6"/>
+          <g className="car__wheel" transform="translate(70 100)"><circle r="21" className="car__tyre"/><circle r="9" className="car__rim"/><path d="M-13 0h26M0-13v26" className="car__spoke"/></g>
+          <g className="car__wheel" transform="translate(238 100)"><circle r="21" className="car__tyre"/><circle r="9" className="car__rim"/><path d="M-13 0h26M0-13v26" className="car__spoke"/></g>
+          <g className="car__arm"><path d="M152 58v-9l12-3v12z" className="car__skin"/><rect x="162" y="38" width="10" height="13" rx="1.5" className="car__cupb"/><rect x="160" y="36" width="14" height="3" rx="1" className="car__cupb"/></g>
+          </svg>
         </div>
 
+        <div className="kiosk__card">
+          <span className="footer__lab">{t('driveLab')}</span>
+          <p className="drive__h">{t('openDaily')}<br/><span dir="ltr">7:00 — 00:00</span></p>
+          <p className="drive__p">{SHOP.area}<br/>Near Innovation Street, University City</p>
+          <p className="drive__p"><a href={SHOP.phoneHref} className="flink" data-cursor="link" dir="ltr">{SHOP.phone}</a> · {t('phoneOrders')}</p>
+          <div className="drive__actions">
+            <a className="btn-orange" href={SHOP.maps} target="_blank" rel="noreferrer noopener" data-cursor="cta"><span>{t('directions')}</span></a>
+            <a className="btn-line" href={ORDER.drivu} target="_blank" rel="noreferrer noopener" data-cursor="cta">{t('order')} →</a>
+          </div>
+        </div>
+      </div>
+
+      <div className="footer__reveal">
         {/* ── quick links: small text, like any footer ── */}
         <nav className="footer__links" aria-label="Quick links">
           {QUICK.map((q) => (
