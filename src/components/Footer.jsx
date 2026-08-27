@@ -43,11 +43,6 @@ export default function Footer() {
     const footer = ref.current;
     const touch = window.matchMedia('(hover: none)').matches;
     const ctx = gsap.context(() => {
-      gsap.set('.fw > span', { yPercent: 108 });
-      gsap.to('.fw > span', {
-        yPercent: 0, duration: 1.2, ease: 'expo.out', stagger: 0.11,
-        scrollTrigger: { trigger: '.footer__reveal', start: 'top 88%' }
-      });
       gsap.from('.footer__col', {
         y: 34, opacity: 0, duration: 0.85, ease: 'power3.out', stagger: 0.1,
         scrollTrigger: { trigger: '.footer__cols', start: 'top 92%' }
@@ -147,11 +142,6 @@ export default function Footer() {
       <canvas className="footer__steam" ref={steamRef} aria-hidden="true" />
       <div className="footer__pour"><canvas ref={pourRef} aria-hidden="true" /></div>
       <div className="footer__reveal">
-        <h2 className="footer__big">
-          <span className="fw"><span>{t('seeYou')[0]}</span></span>
-          <span className="fw fw--i"><span>{t('seeYou')[1]}</span></span>
-        </h2>
-
         {/* ── drive-thru: details + quick links on the LEFT, the car pulling up
               to the window on the RIGHT ── */}
         {/* ── drive-thru on the kiosk illustration: car LEFT · details MIDDLE ── */}

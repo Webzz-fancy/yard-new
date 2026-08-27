@@ -31,7 +31,9 @@ function referencedStills(srcDir) {
       if (e.isDirectory()) walk(f);
       else if (/\.(jsx?|css)$/.test(e.name)) {
         const txt = fs.readFileSync(f, 'utf8');
-        for (const m of txt.matchAll(/([A-Za-z0-9._-]+)\.webp/g)) names.add(m[1] + '.webp');
+        /* not just .webp — the kiosk footer background is a .jpg, and matching
+           only webp silently pruned it out of every deploy */
+        for (const m of txt.matchAll(/([A-Za-z0-9._-]+\.(?:webp|jpe?g|png|svg|avif))/g)) names.add(m[1]);
       }
     }
   };
