@@ -54,6 +54,21 @@ export default function App() {
        Waiting for all 240 frames was ~9 s of blank page on a phone. */
     let released = false;
     const release = () => { if (!released) { released = true; onLoaderDone(); } };
+
+    /* Render and unlock even when the assets never turn up. Without the
+       manifest there is no frame scrub, so the hero holds its poster still —
+       but every word, photo and link is there and the page scrolls. */
+    const bootAnyway = () => { setReady(true); release(); };
+
+    /* NOTHING may leave the page locked. body.is-loading sets
+       overflow:hidden and only onLoaderDone takes it off, so anything that
+       stalled this chain produced a blank cream page that could not be
+       scrolled — indistinguishable from a broken site. A 404 on the manifest
+       did it; so does an image that fires neither load nor error, which is
+       what a dying mobile connection tends to produce. Opening early is
+       safe: frames paint as they land. */
+    const failsafe = setTimeout(bootAnyway, 8000);
+
     loadManifest()
       .then(() => {
         setReady(true);
@@ -64,7 +79,12 @@ export default function App() {
            waits until the opening is in. */
         return getSequence(heroFilm().seq).load((p) => { if (p >= 0.2) release(); });
       })
-      .then(() => { release(); warmSequence('dessert'); });
+      .then(() => { release(); warmSequence('dessert'); })
+      .catch((err) => {
+        console.error('[boot] assets unavailable — opening the page without the film', err);
+        bootAnyway();
+      })
+      .finally(() => clearTimeout(failsafe));
   }, []);
 
   const onLoaderDone = useCallback(() => {

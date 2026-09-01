@@ -10,11 +10,24 @@
 
 let MANIFEST = { sequences: {}, stills: {} };
 
-export async function loadManifest(base = import.meta.env.BASE_URL) {
+/* The whole page hangs off this one small JSON file, so a single flaky
+   request must not decide the visit. fetch() does not reject on a 404 — it
+   used to sail through and die later inside res.json() — so the status is
+   checked, and one transient failure is retried before giving up. If it
+   still fails this throws, and App boots the page anyway (see App.jsx). */
+export async function loadManifest(base = import.meta.env.BASE_URL, tries = 2) {
   if (Object.keys(MANIFEST.sequences).length) return MANIFEST;
-  const res = await fetch(`${base}assets/manifest.json`);
-  MANIFEST = await res.json();
-  return MANIFEST;
+  let last;
+  for (let i = 0; i < tries; i++) {
+    if (i) await new Promise((r) => setTimeout(r, 400));
+    try {
+      const res = await fetch(`${base}assets/manifest.json`);
+      if (!res.ok) throw new Error(`manifest HTTP ${res.status}`);
+      MANIFEST = await res.json();
+      return MANIFEST;
+    } catch (e) { last = e; }
+  }
+  throw last;
 }
 
 export const manifest = () => MANIFEST;
