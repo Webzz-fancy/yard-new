@@ -4,6 +4,7 @@ import { FLAVORS, HERO_ROW, STORY_ORDER, ALL_DRINKS, STATS, storeLink } from '..
 import { openStoreSheet } from './StoreModal';
 import { assetV, getSequence } from '../lib/frames';
 import { heroFilm } from '../lib/film';
+import { onPageReleased } from '../lib/pageReady';
 import { useFlavor } from '../hooks/useFlavor';
 import { useLang } from '../hooks/useLang';
 
@@ -33,8 +34,6 @@ export default function HeroStory() {
   const slotRef = useRef(null);      // invisible marker: a cup's box in half 2
   const queueRefs = [useRef(null), useRef(null), useRef(null)];   // v60, acai, sharjah cloud
   const videoRef = useRef(null);     // full-bleed canvas: the padel film
-  const audioRef = useRef(null);     // the film's own soundtrack, played as an ambient bed
-  const soundRef = useRef(null);     // the Sound toggle — off until asked for
   const heroLayer = useRef(null);
   const storyLayer = useRef(null);
   const idxRef = useRef(null);
@@ -50,6 +49,10 @@ export default function HeroStory() {
     const touch = window.matchMedia('(hover: none)').matches;
     const narrow = window.matchMedia('(max-width: 900px)').matches;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let unsubscribeIntro = () => {};
+    let introT;
+    let headerOnFilm = true;
 
     const ctx = gsap.context(() => {
       const bigLines = gsap.utils.toArray('.story__big .sl > span');
@@ -124,23 +127,29 @@ export default function HeroStory() {
       loadView();
 
       /* ── the opening fade ──
-         This used to be fired by App once the page was released. On a phone
-         the release happens BEFORE this component has mounted, so App called
-         window.__heroIntro?.() into thin air, the optional-call swallowed it,
-         and the canvas sat at opacity 0 for the whole visit — the film never
-         appeared and you got the bare cream page. The intro now belongs to
-         the component: it is idempotent, and if the release already happened
-         it runs immediately instead of waiting to be called. */
+         This used to be fired by App by name, which lost the race on a phone
+         (App released before this component mounted, so the call landed on
+         undefined and the canvas sat at opacity 0 for the whole visit). It
+         subscribes now, so mounting before OR after the release both work. */
       let introDone = false;
       const intro = () => {
         if (introDone) return;
         introDone = true;
         paintFilm(0);                                  // never fade up a blank canvas
-        gsap.fromTo(vcan, { opacity: 0 }, { opacity: 1, duration: 0.9, ease: 'power2.out' });
+        /* A plain CSS transition, NOT a gsap tween. The tween lived inside
+           this gsap.context, so anything that reverted the context — React
+           StrictMode remounting the component in dev, for one — killed the
+           fade and dropped the canvas back to opacity 0, i.e. straight back
+           to the blank cream screen this whole fix exists to prevent. The
+           end state has to survive a revert, so GSAP does not own it. The
+           timeline still tweens this same property later, so the transition
+           is cleared once the fade is done and cannot drag on the scrub. */
+        vcan.style.transition = 'opacity .9s ease-out';
+        vcan.style.opacity = '1';
+        introT = setTimeout(() => { vcan.style.transition = ''; }, 950);
       };
-      window.__heroIntro = intro;
-      if (reduced) { gsap.set(vcan, { opacity: 1 }); introDone = true; }
-      else if (window.__pageReleased) intro();
+      if (reduced) { vcan.style.opacity = '1'; introDone = true; }
+      else unsubscribeIntro = onPageReleased(intro);
 
       /* ── measure where the lead cup must land in half 2 ──
          Measured from OFFSETS, never getBoundingClientRect(): the rect
@@ -204,61 +213,16 @@ export default function HeroStory() {
         for (let i = 0; i + 1 < n; i++) if (t >= handoffAt(i) + SEG * 0.16) idx = i + 1;
         return idx;
       };
-      /* ── sound ──
-         The track used to be seek-scrubbed: every scroll tick nudged
-         currentTime and a 220ms timer paused it again, so on a phone it was
-         play/seek/pause several times a second — crackle rather than a
-         soundtrack. Worse, it armed itself on the first tap ANYWHERE on the
-         page (including the menu button), at full volume, with no control to
-         turn it off, because the Sound button had been deleted from the
-         markup while its stylesheet rule stayed behind.
-
-         It is an ambient bed now: silent until asked for, faded up over
-         ~0.8s, left to run at its own pace, and faded back down when the
-         film leaves the screen. Nothing seeks. */
-      const audio = audioRef.current;
-      const soundBtn = soundRef.current;
-      const VOL = 0.55;
-      let soundOn = false, inFilm = true, fade;
-      if (audio) { audio.loop = true; audio.volume = 0; }
-
-      const fadeTo = (v, d) => {
-        fade?.kill();
-        fade = gsap.to(audio, {
-          volume: v, duration: d, ease: 'power2.out',
-          onComplete: () => { if (v === 0) audio.pause(); }
-        });
-      };
-      const applySound = () => {
-        if (!audio) return;
-        if (soundOn && inFilm) {
-          audio.muted = false;
-          audio.play().catch(() => {});               // ignored if the tap was not trusted
-          fadeTo(VOL, 0.8);
-        } else if (!audio.paused) {
-          fadeTo(0, 0.5);
-        }
-      };
-      const toggleSound = () => {
-        soundOn = !soundOn;
-        soundBtn.classList.toggle('is-on', soundOn);
-        soundBtn.setAttribute('aria-pressed', String(soundOn));
-        const label = soundBtn.querySelector('span');
-        if (label) label.textContent = soundOn ? 'Sound on' : 'Sound';
-        applySound();
-      };
-      soundBtn?.addEventListener('click', toggleSound);
 
       const syncState = () => {
         const t = tl.time();
         paintFilm(t / FILM);
-        /* while the film is on screen the header sits on dark court footage
-           and the sound bed is allowed to play; past it, both hand back */
+        /* the header sits on dark court footage for exactly as long as the
+           film is up; past it, it hands back to the cream page */
         const onFilm = t < FILM + 0.6;
-        if (onFilm !== inFilm) {
-          inFilm = onFilm;
+        if (onFilm !== headerOnFilm) {
+          headerOnFilm = onFilm;
           document.body.classList.toggle('is-onfilm', onFilm);
-          applySound();
         }
         const handed = t >= FILM - 0.001;
         gsap.set(cup, { opacity: handed ? 1 : 0 });
@@ -297,8 +261,6 @@ export default function HeroStory() {
       tl.to({}, { duration: HOLD });
       tl.to('.hfilm__cue', { opacity: 0, duration: 0.3 }, 0.02);
       tl.to(vcan, { opacity: 0, duration: TRAVEL * 0.7, ease: 'power2.inOut' }, HOLD + TRAVEL * 0.15);
-      /* the sound control belongs to the film — it leaves with it */
-      tl.to('.hfilm__sound', { autoAlpha: 0, duration: TRAVEL * 0.4 }, HOLD + TRAVEL * 0.15);
 
       /* THE TRAVEL — the same cup descends into the centre of half 2 */
       tl.to(cup, {
@@ -413,10 +375,9 @@ export default function HeroStory() {
       window.addEventListener('resize', onResize);
       return () => {
         window.removeEventListener('resize', onResize);
-        soundBtn?.removeEventListener('click', toggleSound);
+        unsubscribeIntro();
+        clearTimeout(introT);
         document.body.classList.remove('is-onfilm');
-        fade?.kill();
-        audio?.pause();
         window.__storyCupRect = null;
       };
     }, rootRef);
@@ -446,11 +407,6 @@ export default function HeroStory() {
           <h1 className="sr-only">The Yard — specialty coffee drive-thru at SPARK, Sharjah</h1>
           <canvas className="hfilm" ref={videoRef} aria-hidden="true" />
           <div className="hfilm__cue" aria-hidden="true"><span>Scroll</span><i /></div>
-          <button type="button" className="hfilm__sound" ref={soundRef}
-            aria-pressed="false" aria-label="Toggle film sound">
-            <i aria-hidden="true" /><span>Sound</span>
-          </button>
-          <audio ref={audioRef} src={`${import.meta.env.BASE_URL}assets/audio/padel.m4a`} preload="none" loop />
         </div>
 
         {/* ── HALF 2 ── same background, revealed by scroll ── */}

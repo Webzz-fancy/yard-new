@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { loadManifest, warmSequence, getSequence } from './lib/frames';
 import { heroFilm } from './lib/film';
+import { releasePage } from './lib/pageReady';
 import { setPaletteInstant } from './lib/palette';
 import { FLAVORS, STORY_ORDER } from './data/flavors';
 import { FlavorProvider } from './hooks/useFlavor';
@@ -68,14 +69,12 @@ export default function App() {
 
   const onLoaderDone = useCallback(() => {
     document.body.classList.remove('is-loading');
-    lenis()?.start();
     ScrollTrigger.refresh();
     setDone(true);
-    /* HeroStory may not have mounted yet — it reads this flag on mount and
-       runs its own intro. Calling __heroIntro?.() alone lost the race on a
-       phone and left the film invisible for the whole visit. */
-    window.__pageReleased = true;
-    window.__heroIntro?.();
+    /* Anything that has to wait for the page to open subscribes to this
+       instead of being poked by name. Components that mount AFTER the
+       release still get called — see lib/pageReady.js. */
+    releasePage();
   }, []);
 
   return (

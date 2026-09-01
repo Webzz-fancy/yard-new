@@ -2655,14 +2655,6 @@ body {
 .kiosk__hand { opacity: 0; transition: opacity .4s; }
 .drive__road { bottom: 20px; }
 
-/* hero film sound toggle */
-.hfilm__sound { position: absolute; right: var(--gut); bottom: 26px; z-index: 5; display: inline-flex; align-items: center; gap: 10px;
-  padding: 10px 14px; border-radius: 999px; border: 1px solid rgba(241,234,219,.45); color: #F1EADB; background: rgba(20,28,44,.35);
-  backdrop-filter: blur(8px); font-size: 10.5px; letter-spacing: .22em; text-transform: uppercase; pointer-events: auto; cursor: pointer; transition: background .3s, border-color .3s; }
-.hfilm__sound i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .5; }
-.hfilm__sound.is-on i { opacity: 1; background: #C9D94A; box-shadow: 0 0 0 4px rgba(201,217,74,.25); }
-.hfilm__sound:hover { background: rgba(20,28,44,.55); border-color: #F1EADB; }
-.half--film > .hfilm__sound { pointer-events: auto; }
 
 /* ══ FOOTER v2 — left: details + quick links · right: the scene ═══════ */
 .drive--v2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: clamp(32px, 6vw, 90px); align-items: stretch; padding: 5vh 0 6vh; }
@@ -2933,16 +2925,9 @@ body.is-onfilm .header.is-open .langbtn { color: var(--ink); }
 body.is-onfilm .header.is-open .burger span { background: var(--ink); }
 body.is-onfilm .header.is-open::after { opacity: 0; }
 
-/* the Sound toggle is a real control again (the rule above it had been
-   left behind when the button was deleted from the markup) */
-.hfilm__sound span { line-height: 1; }
 /* .half--story sits ABOVE .half--film in the stack and hands pointer-events
-   to its children, so while the film was still playing the story's own
-   (invisible) progress bar sat right on top of the Sound button and ate the
-   tap. The bar is decorative either way. */
+   to its children, so its (invisible) progress bar was sitting on top of the
+   film layer and eating taps meant for it. The bar is decorative either way. */
 .story__progress { pointer-events: none; }
 body.is-onfilm .half--story,
 body.is-onfilm .half--story > * { pointer-events: none; }
-@media (max-width: 760px) {
-  .hfilm__sound { bottom: 20px; padding: 9px 12px; font-size: 9.5px; letter-spacing: .18em; }
-}

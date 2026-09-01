@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
+import { isPageReleased, onPageReleased } from '../lib/pageReady';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -26,7 +27,14 @@ export function useLenis(enabled = true) {
     const raf = (time) => lenis.raf(time * 1000);
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
-    lenis.stop();                        // released by the loader
+    /* Scroll stays locked until the loader lets go — but the loader may
+       have let go ALREADY (a warm cache releases almost immediately, before
+       this effect runs). Starting stopped in that case left Lenis stopped
+       for the whole visit, and a stopped Lenis calls preventDefault() on
+       touchmove: the phone simply would not scroll. */
+    let unsubscribe = () => {};
+    if (isPageReleased()) lenis.start();
+    else { lenis.stop(); unsubscribe = onPageReleased(() => lenis.start()); }
 
     let t;
     const onResize = () => {
@@ -36,6 +44,7 @@ export function useLenis(enabled = true) {
     window.addEventListener('resize', onResize);
 
     return () => {
+      unsubscribe();
       window.removeEventListener('resize', onResize);
       gsap.ticker.remove(raf);
       lenis.destroy();
