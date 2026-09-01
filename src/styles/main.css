@@ -2906,3 +2906,43 @@ a, button, [data-cursor] { cursor: pointer; }
 
 .mcard__img--btn img[data-src] { opacity: 0; }
 .mcard__img--btn img { transition: opacity .35s ease; }
+
+/* ══ HEADER OVER THE FILM ════════════════════════════════════════════
+   The opening is dark blue court footage and the header sits straight on
+   top of it: a dark-green palm and ink-coloured nav on a dark picture,
+   with no scrim. HeroStory puts `is-onfilm` on the body for exactly as
+   long as the film is on screen, so the marks invert to cream and a soft
+   gradient lifts them off the picture. Everything transitions, so the
+   hand-off back to the cream page is not a flash. */
+body.is-onfilm .header::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; z-index: -1;
+  height: 260%; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(8,14,26,.5), rgba(8,14,26,0));
+}
+body.is-onfilm .header .brand__logo--palm { filter: brightness(0) invert(1); }
+body.is-onfilm .header .nav__link,
+body.is-onfilm .header .langbtn { color: #F1EADB; }
+body.is-onfilm .header .langbtn { border-color: rgba(241,234,219,.55); }
+body.is-onfilm .header .burger span { background: #F1EADB; }
+.brand__logo--palm { transition: filter .5s var(--e-out); }
+.burger span { transition: transform .3s ease, opacity .2s ease, background .5s ease; }
+/* the phone menu drops a cream sheet over the film — put the marks back */
+body.is-onfilm .header.is-open .brand__logo--palm { filter: none; }
+body.is-onfilm .header.is-open .nav__link,
+body.is-onfilm .header.is-open .langbtn { color: var(--ink); }
+body.is-onfilm .header.is-open .burger span { background: var(--ink); }
+body.is-onfilm .header.is-open::after { opacity: 0; }
+
+/* the Sound toggle is a real control again (the rule above it had been
+   left behind when the button was deleted from the markup) */
+.hfilm__sound span { line-height: 1; }
+/* .half--story sits ABOVE .half--film in the stack and hands pointer-events
+   to its children, so while the film was still playing the story's own
+   (invisible) progress bar sat right on top of the Sound button and ate the
+   tap. The bar is decorative either way. */
+.story__progress { pointer-events: none; }
+body.is-onfilm .half--story,
+body.is-onfilm .half--story > * { pointer-events: none; }
+@media (max-width: 760px) {
+  .hfilm__sound { bottom: 20px; padding: 9px 12px; font-size: 9.5px; letter-spacing: .18em; }
+}

@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import { FLAVORS, HERO_ROW, STORY_ORDER, ALL_DRINKS, STATS, storeLink } from '../data/flavors';
 import { openStoreSheet } from './StoreModal';
 import { assetV, getSequence } from '../lib/frames';
+import { heroFilm } from '../lib/film';
 import { useFlavor } from '../hooks/useFlavor';
 import { useLang } from '../hooks/useLang';
 
@@ -32,7 +33,8 @@ export default function HeroStory() {
   const slotRef = useRef(null);      // invisible marker: a cup's box in half 2
   const queueRefs = [useRef(null), useRef(null), useRef(null)];   // v60, acai, sharjah cloud
   const videoRef = useRef(null);     // full-bleed canvas: the padel film
-  const audioRef = useRef(null);     // the film's own soundtrack, scrubbed with it
+  const audioRef = useRef(null);     // the film's own soundtrack, played as an ambient bed
+  const soundRef = useRef(null);     // the Sound toggle — off until asked for
   const heroLayer = useRef(null);
   const storyLayer = useRef(null);
   const idxRef = useRef(null);
@@ -65,19 +67,20 @@ export default function HeroStory() {
          on cream; at that point the canvas switches to a cup-free plate and
          the real lead cup (the same cup, cut out) takes over and travels. */
       const vcan = videoRef.current;
-      const film = getSequence('padel', vcan);
+      /* WHICH CUT — wide on a landscape screen, the portrait re-frame on a
+         phone held upright. See lib/film.js; the choice is re-made on resize
+         so rotating the phone swaps the cut rather than mangling the crop. */
+      let view = heroFilm();
+      let film = getSequence(view.seq, vcan);
       const plate = new Image();
-      plate.src = `${import.meta.env.BASE_URL}assets/stills/padel-plate.webp${assetV()}`;
       const poster = new Image();                     // stands in for any frame that has not arrived yet
-      poster.src = `${import.meta.env.BASE_URL}assets/stills/poster-padel.webp`;
       poster.onload = () => { if (filmFrame < 0 && !onPlate) drawCover(poster); };
-      const FW = 1280, FH = 720;
-      const CUP = { x: 476, y: 163, w: 322, h: 413 };   // cup box inside the last frame
+      plate.onload = () => { if (onPlate) drawCover(plate); };
 
       const cover = () => {
         const vw = pin.offsetWidth, vh = pin.offsetHeight;
-        const sc = Math.max(vw / FW, vh / FH);
-        return { sc, dx: (vw - FW * sc) / 2, dy: (vh - FH * sc) / 2 };
+        const sc = Math.max(vw / view.FW, vh / view.FH);
+        return { sc, dx: (vw - view.FW * sc) / 2, dy: (vh - view.FH * sc) / 2 };
       };
       const drawCover = (img) => {
         const c = vcan, g = c.getContext('2d');
@@ -87,7 +90,7 @@ export default function HeroStory() {
         if (!img?.complete || !img.naturalWidth) return false;
         const { sc, dx, dy } = cover();
         g.clearRect(0, 0, w, h);
-        g.drawImage(img, dx * dpr, dy * dpr, FW * sc * dpr, FH * sc * dpr);
+        g.drawImage(img, dx * dpr, dy * dpr, view.FW * sc * dpr, view.FH * sc * dpr);
         return true;
       };
       let filmFrame = -1, onPlate = false;
@@ -104,16 +107,40 @@ export default function HeroStory() {
       /* place the lead cup exactly over the cup in the last frame */
       const placeLead = () => {
         const { sc, dx, dy } = cover();
+        const cup = view.cup;
         const box = leadBoxRef.current;
-        gsap.set(box, { left: dx + CUP.x * sc, top: dy + CUP.y * sc, width: CUP.w * sc, right: 'auto' });
+        gsap.set(box, { left: dx + cup.x * sc, top: dy + cup.y * sc, width: cup.w * sc, right: 'auto' });
+      };
+
+      /* (re)point the canvas at the current cut and pull it down */
+      const loadView = () => {
+        film = getSequence(view.seq, vcan);
+        plate.src = `${import.meta.env.BASE_URL}assets/stills/${view.plate}${assetV()}`;
+        poster.src = `${import.meta.env.BASE_URL}assets/stills/${view.poster}${assetV()}`;
+        filmFrame = -1; onPlate = false;
+        film.load().then(repaint);
       };
       placeLead();
-      film.load().then(repaint);
-      plate.onload = () => { if (onPlate) drawCover(plate); };
+      loadView();
 
-      const intro = () => gsap.timeline().fromTo(vcan, { opacity: 0 }, { opacity: 1, duration: 0.9, ease: 'power2.out' });
+      /* ── the opening fade ──
+         This used to be fired by App once the page was released. On a phone
+         the release happens BEFORE this component has mounted, so App called
+         window.__heroIntro?.() into thin air, the optional-call swallowed it,
+         and the canvas sat at opacity 0 for the whole visit — the film never
+         appeared and you got the bare cream page. The intro now belongs to
+         the component: it is idempotent, and if the release already happened
+         it runs immediately instead of waiting to be called. */
+      let introDone = false;
+      const intro = () => {
+        if (introDone) return;
+        introDone = true;
+        paintFilm(0);                                  // never fade up a blank canvas
+        gsap.fromTo(vcan, { opacity: 0 }, { opacity: 1, duration: 0.9, ease: 'power2.out' });
+      };
       window.__heroIntro = intro;
-      if (reduced) gsap.set(vcan, { opacity: 1 });
+      if (reduced) { gsap.set(vcan, { opacity: 1 }); introDone = true; }
+      else if (window.__pageReleased) intro();
 
       /* ── measure where the lead cup must land in half 2 ──
          Measured from OFFSETS, never getBoundingClientRect(): the rect
@@ -177,38 +204,62 @@ export default function HeroStory() {
         for (let i = 0; i + 1 < n; i++) if (t >= handoffAt(i) + SEG * 0.16) idx = i + 1;
         return idx;
       };
-      /* sound: the film's own track follows the scrub. Browsers only allow
-         audio after a tap, so it stays silent until the Sound button. */
-      let audioT, lastT = -1;
-      const syncAudio = (p) => {
-        const a = audioRef.current;
-        if (!a || a.dataset.on !== '1') return;
-        if (p >= 1 || p <= 0) { a.pause(); return; }
-        const want = p * (a.duration || 10);
-        if (Math.abs(a.currentTime - want) > 0.35) a.currentTime = want;
-        if (want !== lastT) {
-          lastT = want;
-          if (a.paused) a.play().catch(() => {});
-          clearTimeout(audioT);
-          audioT = setTimeout(() => a.pause(), 220);     // stops when the wheel stops
+      /* ── sound ──
+         The track used to be seek-scrubbed: every scroll tick nudged
+         currentTime and a 220ms timer paused it again, so on a phone it was
+         play/seek/pause several times a second — crackle rather than a
+         soundtrack. Worse, it armed itself on the first tap ANYWHERE on the
+         page (including the menu button), at full volume, with no control to
+         turn it off, because the Sound button had been deleted from the
+         markup while its stylesheet rule stayed behind.
+
+         It is an ambient bed now: silent until asked for, faded up over
+         ~0.8s, left to run at its own pace, and faded back down when the
+         film leaves the screen. Nothing seeks. */
+      const audio = audioRef.current;
+      const soundBtn = soundRef.current;
+      const VOL = 0.55;
+      let soundOn = false, inFilm = true, fade;
+      if (audio) { audio.loop = true; audio.volume = 0; }
+
+      const fadeTo = (v, d) => {
+        fade?.kill();
+        fade = gsap.to(audio, {
+          volume: v, duration: d, ease: 'power2.out',
+          onComplete: () => { if (v === 0) audio.pause(); }
+        });
+      };
+      const applySound = () => {
+        if (!audio) return;
+        if (soundOn && inFilm) {
+          audio.muted = false;
+          audio.play().catch(() => {});               // ignored if the tap was not trusted
+          fadeTo(VOL, 0.8);
+        } else if (!audio.paused) {
+          fadeTo(0, 0.5);
         }
       };
-      /* browsers refuse audio until the user has clicked/tapped/typed once
-         (a wheel scroll does not count) — so the first such gesture unlocks
-         the track, and from then on it follows the scrub */
-      const unlock = () => {
-        const a = audioRef.current;
-        if (!a) return;
-        a.muted = false;
-        a.play().then(() => { a.pause(); a.dataset.unlocked = '1'; }).catch(() => {});
-        ['pointerdown', 'keydown', 'touchstart'].forEach((ev) => window.removeEventListener(ev, unlock));
+      const toggleSound = () => {
+        soundOn = !soundOn;
+        soundBtn.classList.toggle('is-on', soundOn);
+        soundBtn.setAttribute('aria-pressed', String(soundOn));
+        const label = soundBtn.querySelector('span');
+        if (label) label.textContent = soundOn ? 'Sound on' : 'Sound';
+        applySound();
       };
-      ['pointerdown', 'keydown', 'touchstart'].forEach((ev) => window.addEventListener(ev, unlock, { passive: true }));
+      soundBtn?.addEventListener('click', toggleSound);
 
       const syncState = () => {
         const t = tl.time();
         paintFilm(t / FILM);
-        syncAudio(t / FILM);
+        /* while the film is on screen the header sits on dark court footage
+           and the sound bed is allowed to play; past it, both hand back */
+        const onFilm = t < FILM + 0.6;
+        if (onFilm !== inFilm) {
+          inFilm = onFilm;
+          document.body.classList.toggle('is-onfilm', onFilm);
+          applySound();
+        }
         const handed = t >= FILM - 0.001;
         gsap.set(cup, { opacity: handed ? 1 : 0 });
         const id = STORY_ORDER[segAt(t)];
@@ -228,7 +279,10 @@ export default function HeroStory() {
           end: '+=' + total,
           pin: pin,
           pinSpacing: true,
-          scrub: 1.1,
+          /* a thumb-flick ends abruptly, so 1.1s of scrub left the film
+             running for a beat after the finger stopped and it read as lag.
+             Tighter on touch, unchanged on a wheel. */
+          scrub: touch ? 0.55 : 1.1,
           anticipatePin: 1,
           invalidateOnRefresh: true,
           onRefresh: measure,
@@ -243,6 +297,8 @@ export default function HeroStory() {
       tl.to({}, { duration: HOLD });
       tl.to('.hfilm__cue', { opacity: 0, duration: 0.3 }, 0.02);
       tl.to(vcan, { opacity: 0, duration: TRAVEL * 0.7, ease: 'power2.inOut' }, HOLD + TRAVEL * 0.15);
+      /* the sound control belongs to the film — it leaves with it */
+      tl.to('.hfilm__sound', { autoAlpha: 0, duration: TRAVEL * 0.4 }, HOLD + TRAVEL * 0.15);
 
       /* THE TRAVEL — the same cup descends into the centre of half 2 */
       tl.to(cup, {
@@ -341,14 +397,26 @@ export default function HeroStory() {
         return { left: o.x, top: o.y, width: w, height: h };
       };
 
+      document.body.classList.add('is-onfilm');
+
       let rt;
       const onResize = () => {
         clearTimeout(rt);
-        rt = setTimeout(measure, 180);
+        rt = setTimeout(() => {
+          /* rotating the phone changes which cut fits — swap before measuring
+             so the cup box is placed against the frame that is actually up */
+          const next = heroFilm();
+          if (next.seq !== view.seq) { view = next; loadView(); }
+          measure();
+        }, 180);
       };
       window.addEventListener('resize', onResize);
       return () => {
         window.removeEventListener('resize', onResize);
+        soundBtn?.removeEventListener('click', toggleSound);
+        document.body.classList.remove('is-onfilm');
+        fade?.kill();
+        audio?.pause();
         window.__storyCupRect = null;
       };
     }, rootRef);
@@ -378,7 +446,11 @@ export default function HeroStory() {
           <h1 className="sr-only">The Yard — specialty coffee drive-thru at SPARK, Sharjah</h1>
           <canvas className="hfilm" ref={videoRef} aria-hidden="true" />
           <div className="hfilm__cue" aria-hidden="true"><span>Scroll</span><i /></div>
-          <audio ref={audioRef} src={`${import.meta.env.BASE_URL}assets/audio/padel.m4a`} preload="auto" data-on="1" />
+          <button type="button" className="hfilm__sound" ref={soundRef}
+            aria-pressed="false" aria-label="Toggle film sound">
+            <i aria-hidden="true" /><span>Sound</span>
+          </button>
+          <audio ref={audioRef} src={`${import.meta.env.BASE_URL}assets/audio/padel.m4a`} preload="none" loop />
         </div>
 
         {/* ── HALF 2 ── same background, revealed by scroll ── */}

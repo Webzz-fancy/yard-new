@@ -20,6 +20,13 @@
    "count": 120,
    "pad": 4,
    "ext": "webp"
+  },
+  "padel-tall": {
+   "dir": "assets/frames/padel-tall",
+   "base": "padel-tall",
+   "count": 240,
+   "pad": 4,
+   "ext": "webp"
   }
  },
  "stills": {
@@ -29,5 +36,5 @@
    "h": 420
   }
  },
- "build": "padel3"
+ "build": "padel4"
 }

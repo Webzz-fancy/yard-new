@@ -10,7 +10,10 @@ import path from 'node:path';
    never request is silly, so they are dropped from dist/ and from the
    manifest that dist/ serves. Add a name back to KEEP the moment a sequence
    is used again. */
-const USED_SEQUENCES = ['bean-crack', 'padel', 'dessert'];   // padel = the hero film
+const USED_SEQUENCES = ['bean-crack', 'padel', 'dessert', 'padel-tall'];
+/* padel = the hero film (wide screens) · padel-tall = its portrait cut, the
+   one a phone actually plays — see src/lib/film.js. Only one of the two is
+   ever downloaded by a given viewport. */
 
 /* Legacy stills from the fictional-roastery draft. They stay in
    public/assets/stills (nothing is deleted from the project) but there is

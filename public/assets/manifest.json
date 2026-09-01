@@ -1,94 +1,101 @@
 {
-  "sequences": {
-    "latte-rotate": {
-      "dir": "assets/frames/latte-rotate",
-      "base": "latte-rotate",
-      "count": 44,
-      "pad": 4,
-      "ext": "webp"
-    },
-    "matcha-rotate": {
-      "dir": "assets/frames/matcha-rotate",
-      "base": "matcha-rotate",
-      "count": 44,
-      "pad": 4,
-      "ext": "webp"
-    },
-    "bean-crack": {
-      "dir": "assets/frames/bean-crack",
-      "base": "bean-crack",
-      "count": 27,
-      "pad": 4,
-      "ext": "webp"
-    },
-    "rose-rotate": {
-      "dir": "assets/frames/rose-rotate",
-      "base": "rose-rotate",
-      "count": 44,
-      "pad": 4,
-      "ext": "webp"
-    },
-    "padel": {
-      "dir": "assets/frames/padel",
-      "base": "padel",
-      "count": 240,
-      "pad": 4,
-      "ext": "webp"
-    },
-    "dessert": {
-      "dir": "assets/frames/dessert",
-      "base": "dessert",
-      "count": 120,
-      "pad": 4,
-      "ext": "webp"
-    }
+ "sequences": {
+  "latte-rotate": {
+   "dir": "assets/frames/latte-rotate",
+   "base": "latte-rotate",
+   "count": 44,
+   "pad": 4,
+   "ext": "webp"
   },
-  "stills": {
-    "latte": {
-      "src": "assets/stills/latte.webp",
-      "w": 548,
-      "h": 1100
-    },
-    "matcha": {
-      "src": "assets/stills/matcha.webp",
-      "w": 537,
-      "h": 1100
-    },
-    "mocha": {
-      "src": "assets/stills/mocha.webp",
-      "w": 546,
-      "h": 1100
-    },
-    "bean": {
-      "src": "assets/stills/bean.webp",
-      "w": 526,
-      "h": 420
-    },
-    "orange": {
-      "src": "assets/stills/orange.webp",
-      "w": 539,
-      "h": 1100
-    },
-    "rose": {
-      "src": "assets/stills/rose.webp",
-      "w": 539,
-      "h": 1100
-    },
-    "blueberry": {
-      "src": "assets/stills/blueberry.webp",
-      "w": 545,
-      "h": 1100
-    },
-    "mango": {
-      "src": "assets/stills/mango.webp",
-      "w": 542,
-      "h": 1100
-    },
-    "watermelon": {
-      "src": "assets/stills/watermelon.webp",
-      "w": 531,
-      "h": 1100
-    }
+  "matcha-rotate": {
+   "dir": "assets/frames/matcha-rotate",
+   "base": "matcha-rotate",
+   "count": 44,
+   "pad": 4,
+   "ext": "webp"
   },
-  "build": "padel3"
+  "bean-crack": {
+   "dir": "assets/frames/bean-crack",
+   "base": "bean-crack",
+   "count": 27,
+   "pad": 4,
+   "ext": "webp"
+  },
+  "rose-rotate": {
+   "dir": "assets/frames/rose-rotate",
+   "base": "rose-rotate",
+   "count": 44,
+   "pad": 4,
+   "ext": "webp"
+  },
+  "padel": {
+   "dir": "assets/frames/padel",
+   "base": "padel",
+   "count": 240,
+   "pad": 4,
+   "ext": "webp"
+  },
+  "dessert": {
+   "dir": "assets/frames/dessert",
+   "base": "dessert",
+   "count": 120,
+   "pad": 4,
+   "ext": "webp"
+  },
+  "padel-tall": {
+   "dir": "assets/frames/padel-tall",
+   "base": "padel-tall",
+   "count": 240,
+   "pad": 4,
+   "ext": "webp"
+  }
+ },
+ "stills": {
+  "latte": {
+   "src": "assets/stills/latte.webp",
+   "w": 548,
+   "h": 1100
+  },
+  "matcha": {
+   "src": "assets/stills/matcha.webp",
+   "w": 537,
+   "h": 1100
+  },
+  "mocha": {
+   "src": "assets/stills/mocha.webp",
+   "w": 546,
+   "h": 1100
+  },
+  "bean": {
+   "src": "assets/stills/bean.webp",
+   "w": 526,
+   "h": 420
+  },
+  "orange": {
+   "src": "assets/stills/orange.webp",
+   "w": 539,
+   "h": 1100
+  },
+  "rose": {
+   "src": "assets/stills/rose.webp",
+   "w": 539,
+   "h": 1100
+  },
+  "blueberry": {
+   "src": "assets/stills/blueberry.webp",
+   "w": 545,
+   "h": 1100
+  },
+  "mango": {
+   "src": "assets/stills/mango.webp",
+   "w": 542,
+   "h": 1100
+  },
+  "watermelon": {
+   "src": "assets/stills/watermelon.webp",
+   "w": 531,
+   "h": 1100
+  }
+ },
+ "build": "padel4"
 }

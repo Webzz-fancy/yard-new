@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { loadManifest, warmSequence, getSequence } from './lib/frames';
+import { heroFilm } from './lib/film';
 import { setPaletteInstant } from './lib/palette';
 import { FLAVORS, STORY_ORDER } from './data/flavors';
 import { FlavorProvider } from './hooks/useFlavor';
@@ -55,11 +56,14 @@ export default function App() {
     loadManifest()
       .then(() => {
         setReady(true);
-        /* both films start now; the page opens at 20% of the hero film */
-        warmSequence('dessert');
-        return getSequence('padel').load((p) => { if (p >= 0.2) release(); });
+        /* ONLY the hero film loads now. The dessert sequence used to start in
+           this same tick, and its 8 MB fought the hero film for the phone's
+           one connection — 13.8 MB over 250 requests before the first screen
+           could resolve. It is not seen until ~9000px down the page, so it
+           waits until the opening is in. */
+        return getSequence(heroFilm().seq).load((p) => { if (p >= 0.2) release(); });
       })
-      .then(release);
+      .then(() => { release(); warmSequence('dessert'); });
   }, []);
 
   const onLoaderDone = useCallback(() => {
@@ -67,6 +71,10 @@ export default function App() {
     lenis()?.start();
     ScrollTrigger.refresh();
     setDone(true);
+    /* HeroStory may not have mounted yet — it reads this flag on mount and
+       runs its own intro. Calling __heroIntro?.() alone lost the race on a
+       phone and left the film invisible for the whole visit. */
+    window.__pageReleased = true;
     window.__heroIntro?.();
   }, []);
 
