@@ -18,8 +18,8 @@ export default function Orders() {
   const [state, setState] = useState(load);
   const [taking, setTaking] = useState(false);
 
-  useEffect(() => save(state), [state]);
-  useEffect(() => window.scrollTo(0, 0), [taking]);
+  useEffect(() => { save(state); }, [state]);
+  useEffect(() => { window.scrollTo(0, 0); }, [taking]);
 
   const stored = state.orders.filter((o) => o.status === 'stored');
   const cleared = state.orders
